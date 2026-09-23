@@ -1,0 +1,4 @@
+\section{The Human-Grader Floor}
+\label{sec:floor}
+
+Across all $570$ dual-graded submissions of the CV exam the two graders' totals agree to $\text{MAE} = 2.61 / 35$ ($95\%$ bootstrap CI $[2.37, 2.85]$; Pearson $r = 0.868$). We treat $2.61$ as the human-grader floor: an AI configuration whose MAE sits at or below it makes, in aggregate, no more error against the grader average than the two graders make against each other. The floor is comparative only, and leans in the AI's favour because averaging two graders cancels part of their noise. Beating it yields a parity claim of the kind Section~\ref{sec:finetune:parity} retests with a paired third-grader test. The floor pools across pairs whose internal disagreement varies by $4.2\times$: per-pair MAE runs $0.85$ to $3.55$ over the $10$ fixed pairs, so which pair a student draws is a source of variability (Appendix~\ref{sec:groundtruth}).

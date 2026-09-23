@@ -1,0 +1,20 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{What the collapse is, and is not.}
+Of the three failure modes only selective field collapse looks like a failure to negotiate conflicting instructions, and only as a hypothesis (Section~\ref{sec:brittle:mech}); the others are calibration drift and refusal, which never appears on a Qwen model, so a single-family roster misses that mode. Spanning all six families unordered by scale, the failure belongs to open-weights instruction following: no closed model of the three vendors leaves the band on either exam, and robustness above $106$B is half illusory once the ML exam decomposes it. Fine-tuning shows the failure is zero-shot, not small-model. 
+
+\paragraph{Why single-prompt evaluation misses it.}
+One well-behaved prompt leaves the best open-weights configuration just over one MAE point behind Gemini's best ($2.68$ vs.\ $1.64$), one instructor-style persona preamble nearly fourteen behind ($15.58$): single-prompt evaluation would have told a sunnier story~\citep{sclar2024quantifyinglanguagemodelssensitivity,mizrahi2024stateartmultipromptllm}.
+
+
+
+
+
+
+
+
+\paragraph{Implications for deployment.}
+
+\textbf{(1)} \textbf{Never instruct a grader to withhold credit}: both policy sentences collapse graders on their own (Section~\ref{sec:brittle:attrib}), unordered by parameter count, and under-grading harms students who attempted the work in good faith. Verify the model against the prompt \emph{and the exam}: on the ML exam the same preamble helps seven of $17$ models purely by cancelling their over-marking, yet nearly doubles the error of the ML exam's best. \textbf{(2)} \textbf{With in-house dual-graded examples, fine-tune rather than prompt-engineer --- and pool the courses.} One adapter on the two exams' pooled $\sim 3{,}900$ examples brings every $4$B--$30$B model to parity or better with a human grader on both exams and removes the collapse on both (persona drift $\le 0.32$ MAE), with no closed-model teacher and no cost to either course. \textbf{(3)} \textbf{Evaluate several prompt variants}, including instructor-written ones. \textbf{(4)} \textbf{Report bias alongside MAE}: Flash-Lite's lenient and strict have comparable MAE with opposite-signed bias ($+4.01$ vs.\ $-5.44$): MAE alone does not show which way the harm runs.
+

@@ -1,0 +1,47 @@
+\section{The Strict-Persona Collapse}
+\label{sec:brittle}
+
+\subsection{The collapse, quantified}
+\label{sec:brittle:numbers}
+
+Table~\ref{tab:brittle} (Appendix~\ref{app:brittle}) pairs each model's \emph{strict} and \emph{neutral} runs, identical bar the persona sentence; Figure~\ref{fig:brittle} renders all $51$ strict-flavoured runs. MAE alone cannot separate the failures (zeroing every student scores $\text{MAE} \approx 26$, the distance from the grader mean), so we add a \emph{behaviour} class: a \textbf{refusal} zeroes at least $90\%$ of students with awarded-total standard deviation below $0.5$, a \emph{near-refusal} keeps some variation at that zero-rate, a \textbf{collapse} reaches $3.07\times$ its own exam's inter-grader floor while still discriminating between students, and anything else is \emph{graded}. The CV exam's $\text{MAE} \ge 8$ fixes that multiple ($3.07 \times 2.61$) and gives $\text{MAE} \ge 15.7$ on the ML exam ($3.07 \times 5.13$), the same severity on both scales.
+
+\paragraph{Every open-weight family breaks.}
+Prepending a short ``strict grader'' preamble to the otherwise-best prompt takes $14$ of the $17$ config-matched pairs out of the graded band, all six families represented, MAE rising $\times 1.69$ to $\times 7.11$. Three models stop grading outright: Llama-3.1-8B and Mistral-Small-24B award $0.00/35$ on average, GLM-4-9B $0.56$; Qwen2.5-Coder-$32$B still marks students ($\text{MAE} = 20.29$, bias $-20.28$, mean awarded $5.75/35$). No Gemini configuration collapses under any wording here (Appendix~\ref{app:brittle}): \texttt{gemini-3.1-pro-preview} moves $1.86 \to 2.75$ under \emph{strict} (F$03$, still at the floor), Flash-Lite's strict-flavoured runs sit at $3.73$--$5.75$ --- an imperfect calibration knob, not a failure mode --- and GPT-5.5, GPT-5.4 and Claude Opus 5 stay in band (Section~\ref{sec:closed:vendors}).
+
+\paragraph{Scale does not order the damage.}
+Parameter count and the strict/neutral MAE ratio correlate at $\rho = -0.21$ ($p = 0.42$) across the $17$ sized models. The two largest ratios belong to a $24$B model that stops grading and a $14$B that zeroes $88\%$ of submissions, while $106$B GLM-4.5-Air collapses to $21.02$; GLM \emph{improves} from $9$B to $32$B before worsening at $106$B while Gemma \emph{worsens} from $12$B to $27$B --- opposite directions over matched rungs. Robustness does appear at the top, Qwen3-$235$B-A$22$B and Qwen3-Coder-$480$B staying in band, but both are Qwen, the only family with rungs above $106$B, confounding family with scale exactly where it matters; the third in-band model, Qwen2.5-Coder-$7$B, clears the threshold by $0.08$ from an already-weak baseline.
+
+\paragraph{The damage is specific to one preset.}
+Two of $13$ models leave the band under \emph{rigorous} and two under \emph{exacting}, against $14$ of $17$ under \emph{strict} (Table~\ref{tab:wording}, Appendix~\ref{app:brittle}); only \emph{strict} carries the two policy sentences, so the gap is about policy content, not vocabulary.
+
+\subsection{Attribution: the policy sentences, not the adjective}
+\label{sec:brittle:attrib}
+
+The \emph{strict} preset is three sentences: a frame (``You are a HARSH teaching assistant.'') and two policy sentences --- \textbf{S1}, ``Award the MINIMUM defensible score for any task that is incomplete, buggy, or deviates from the rubric.'', and \textbf{S2}, ``Never give partial credit if the task does not run correctly.'' Varying the adjective alone --- STRICT, RIGOROUS, FAIR --- over verbatim S1 and S2 moves MAE by $0.94$ to $2.15$ across five models, in no consistent direction (Table~\ref{tab:attrib}, Appendix~\ref{app:brittle}); \textbf{FAIR} with the harsh policy leaves Mistral-Small-24B at $25.05$, still not grading.
+
+A $2 \times 2$ crosses S1 with S2 on three models, frame fixed: the frame alone moves each less than two points off neutral, both sentences take them to $20.26$--$26.04$, S2 alone to outright refusal on Llama-3.1-8B and Mistral-Small-24B. S1 is not benign --- alone it takes Llama-3.1-8B to $23.45$ and outdoes S2 on Qwen2.5-Coder-32B ($15.55$ against $12.92$) --- so dominance varies by family: S1 for the $32$B, S2 for the other two, on both exams, where S2 again alone stops graders grading (Appendix~\ref{app:replication}). S2 contradicts the partial-credit scale the rubric scaffold mandates --- hence the safer wordings, and advice about one instruction, not a tone.
+
+\subsection{Mechanism: three failure modes, one MAE range}
+\label{sec:brittle:mech}
+
+Three explanations fit the headline numbers: refusal, calibration drift, conflicting instructions (``be strict'' vs.\ ``award partial credit per rubric''). All three occur, on different models, indistinguishably by MAE: Gemma-3-27B reaches $\text{MAE} = 11.55$ having zeroed Q$1$ on \emph{zero} of $570$ students, GLM-4-32B a lower $9.66$ by zeroing $273$. One question separates them --- of students scored $0$ on Q$1$, what fraction received a non-zero Q$2$? --- and it splits the $19$ matched strict runs into \textbf{blanket zeroing} (five), \textbf{selective field collapse} (five) and \textbf{uniform severity} (nine), both thresholds in empty bands (Table~\ref{tab:mechanism}, Appendix~\ref{app:brittle}).
+
+In the selective group the prompt's two output channels disagree: on the two hand-annotated runs, $20\%$ and $43\%$ of zeroed submissions carry a rationale itemising partial credit while the score field reads $0$ (Appendix~\ref{app:brittle}) --- one channel obeys S2, the other the rubric breakdown. But this covers neither other group, and its clearest prediction fails: withdrawing the breakdown \emph{worsens} the collapse in five of five families against a clean neutral control (Appendix~\ref{app:brittle}). An alternative fits that failure --- the breakdown may anchor the score field to non-zero sub-totals, so withdrawing it lets the credit-withholding sentence run unopposed --- and our grid cannot separate the two; we treat the mechanism as classified rather than explained (Section~\ref{sec:limitations}).
+
+\subsection{The collapse replicates on the ML exam; its direction does not}
+\label{sec:brittle:replication}
+
+We replicate it on the ML exam (Section~\ref{sec:setup}; floor $5.13$ computed identically) over $162$ configurations: neutral and \emph{strict} runs for all $17$ open-weights models, five-persona sweeps, attribution probes, a closed-model arm (Appendix~\ref{app:replication}). Under \emph{strict} four models cross from the graded band to above that exam's ($\text{MAE} \ge 15.7$); Llama-3.1-$8$B again refuses. A fixed $\text{MAE} \ge 8$, only $1.56\times$ this floor, would instead put ten strict runs out of band and eleven \emph{neutral} baselines with them, against one here (DeepSeek-Coder-V2-Lite, $16.41$). The collapse is thus no artifact of one rubric, cohort or scale --- nor of open weights alone: Flash-Lite worsens under \emph{strict} ($7.53 \to 9.02$) and leaves the band under \emph{lenient} ($17.86$), while \texttt{gemini-3.1-pro-preview} stays below the floor ($3.40 \to 3.67$, IG$23$).
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{cross_exam_strict.pdf}
+\caption{The strict persona on the $17$ models run on both exams, floor-relative. \emph{Left, centre:} neutral (circle) $\to$ strict MAE; dashed = floor, dotted = each exam's band ($3.07\times$ floor: $\text{MAE} \ge 8$ on the CV exam, $\ge 15.7$ on the ML exam), dashed arrows = refusals (ceiling MAE). \emph{Right:} the signed strict effect $(\text{MAE}_{\text{strict}} - \text{MAE}_{\text{neutral}}) / \text{floor}$ against neutral bias, negative exactly where the persona cancels over-marking.}
+\label{fig:crossexam}
+\end{figure}
+
+The \emph{direction} does not transfer (Figure~\ref{fig:crossexam}): seven of $17$ improve under the same sentence --- calibration, not robustness. The ML exam's neutral prompt over-marks for $15$ models, and across the $16$ non-refusal pairs neutral bias predicts the strict effect at $r = -0.73$ (permutation $p = 0.002$); on the CV exam, whose neutral biases straddle zero (none above $+1.68$), zero of $17$ improve. The decomposition also splits the two big Qwens' apparent robustness: the $480$B over-marks by $9.52$ points at neutral ($\text{MAE} = 10.10$, twice its floor) and is pulled back by the sentence; the $235$B is the one model above $106$B in band under both personas on both exams. Parity replicates on both sides (\texttt{gemini-3.1-pro-preview} at $0.66\times$ the ML exam's floor, Qwen3-Coder-Next at $4.47$), and the failure mode wanders: Qwen2.5-Coder-$32$B, selective here, zeroes whole submissions there.
+
+\paragraph{One preamble, two remedies.}
+One preamble separates competitive open-weights graders (Section~\ref{sec:open}) from $14$ out of band, a gap single-prompt evaluation cannot see~\citep{sclar2024quantifyinglanguagemodelssensitivity,mizrahi2024stateartmultipromptllm}, with two remedies: never forbid partial credit, or fine-tune lightly on in-house labels (Section~\ref{sec:finetune}).

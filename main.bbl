@@ -1,0 +1,323 @@
+\begin{thebibliography}{36}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Prather et~al.(2023)Prather, Denny, Leinonen, Becker, Albluwi, Craig,
+  Keuning, Kiesler, Kohn, Luxton-Reilly, MacNeil, Petersen, Pettit, Reeves, and
+  Savelka]{prather2023robotsherenavigatinggenerative}
+James Prather, Paul Denny, Juho Leinonen, Brett~A. Becker, Ibrahim Albluwi,
+  Michelle Craig, Hieke Keuning, Natalie Kiesler, Tobias Kohn, Andrew
+  Luxton-Reilly, Stephen MacNeil, Andrew Petersen, Raymond Pettit, Brent~N.
+  Reeves, and Jaromir Savelka.
+\newblock The robots are here: Navigating the generative {AI} revolution in
+  computing education.
+\newblock In \emph{Proceedings of the 2023 Working Group Reports on Innovation
+  and Technology in Computer Science Education}, ITiCSE 2023, pages 108--159.
+  ACM, December 2023.
+\newblock \doi{10.1145/3623762.3633499}.
+\newblock URL \url{https://doi.org/10.1145/3623762.3633499}.
+
+\bibitem[Phung et~al.(2023)Phung, P{\u{a}}durean, Cambronero, Gulwani, Kohn,
+  Majumdar, Singla, and Soares]{phung2023generativeaiprogrammingeducation}
+Tung Phung, Victor-Alexandru P{\u{a}}durean, Jos{\'e} Cambronero, Sumit
+  Gulwani, Tobias Kohn, Rupak Majumdar, Adish Singla, and Gustavo Soares.
+\newblock Generative {AI} for programming education: Benchmarking {ChatGPT},
+  {GPT-4}, and human tutors.
+\newblock In \emph{Proceedings of the 2023 {ACM} Conference on International
+  Computing Education Research - Volume 2}, ICER 2023, pages 41--42. ACM, 2023.
+\newblock \doi{10.1145/3568812.3603476}.
+\newblock URL \url{https://doi.org/10.1145/3568812.3603476}.
+
+\bibitem[Zheng et~al.(2023)Zheng, Chiang, Sheng, Zhuang, Wu, Zhuang, Lin, Li,
+  Li, Xing, Zhang, Gonzalez, and
+  Stoica]{zheng2023judgingllmasajudgemtbenchchatbot}
+Lianmin Zheng, Wei-Lin Chiang, Ying Sheng, Siyuan Zhuang, Zhanghao Wu, Yonghao
+  Zhuang, Zi~Lin, Zhuohan Li, Dacheng Li, Eric Xing, Hao Zhang, Joseph
+  Gonzalez, and Ion Stoica.
+\newblock Judging {LLM-as-a-Judge} with {MT-Bench} and {Chatbot Arena}.
+\newblock In A.~Oh, T.~Naumann, A.~Globerson, K.~Saenko, M.~Hardt, and
+  S.~Levine, editors, \emph{Advances in Neural Information Processing Systems},
+  volume~36, pages 46595--46623. Curran Associates, Inc., 2023.
+\newblock \doi{10.52202/075280-2020}.
+\newblock URL
+  \url{https://proceedings.neurips.cc/paper_files/paper/2023/file/91f18a1287b398d378ef22505bf41832-Paper-Datasets_and_Benchmarks.pdf}.
+
+\bibitem[Liu et~al.(2023)Liu, Iter, Xu, Wang, Xu, and
+  Zhu]{liu2023gevalnlgevaluationusing}
+Yang Liu, Dan Iter, Yichong Xu, Shuohang Wang, Ruochen Xu, and Chenguang Zhu.
+\newblock {G-Eval}: {NLG} evaluation using {GPT-4} with better human alignment.
+\newblock In Houda Bouamor, Juan Pino, and Kalika Bali, editors,
+  \emph{Proceedings of the 2023 Conference on Empirical Methods in Natural
+  Language Processing}, pages 2511--2522, Singapore, December 2023. Association
+  for Computational Linguistics.
+\newblock \doi{10.18653/v1/2023.emnlp-main.153}.
+\newblock URL \url{https://aclanthology.org/2023.emnlp-main.153/}.
+
+\bibitem[Messer et~al.(2024)Messer, Brown, K{\"o}lling, and
+  Shi]{messer2024automatedgradingfeedbacktools}
+Marcus Messer, Neil C.~C. Brown, Michael K{\"o}lling, and Miaojing Shi.
+\newblock Automated grading and feedback tools for programming education: A
+  systematic review.
+\newblock \emph{ACM Transactions on Computing Education}, 24\penalty0
+  (1):\penalty0 1--43, February 2024.
+\newblock \doi{10.1145/3636515}.
+\newblock URL \url{https://doi.org/10.1145/3636515}.
+
+\bibitem[Brown et~al.(2020)Brown, Mann, Ryder, Subbiah, Kaplan, Dhariwal,
+  Neelakantan, Shyam, Sastry, Askell, Agarwal, Herbert-Voss, Krueger, Henighan,
+  Child, Ramesh, Ziegler, Wu, Winter, Hesse, Chen, Sigler, Litwin, Gray, Chess,
+  Clark, Berner, McCandlish, Radford, Sutskever, and
+  Amodei]{brown2020languagemodelsfewshotlearners}
+Tom Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared~D Kaplan, Prafulla
+  Dhariwal, Arvind Neelakantan, Pranav Shyam, Girish Sastry, Amanda Askell,
+  Sandhini Agarwal, Ariel Herbert-Voss, Gretchen Krueger, Tom Henighan, Rewon
+  Child, Aditya Ramesh, Daniel Ziegler, Jeffrey Wu, Clemens Winter, Chris
+  Hesse, Mark Chen, Eric Sigler, Mateusz Litwin, Scott Gray, Benjamin Chess,
+  Jack Clark, Christopher Berner, Sam McCandlish, Alec Radford, Ilya Sutskever,
+  and Dario Amodei.
+\newblock Language models are few-shot learners.
+\newblock In H.~Larochelle, M.~Ranzato, R.~Hadsell, M.F. Balcan, and H.~Lin,
+  editors, \emph{Advances in Neural Information Processing Systems}, volume~33,
+  pages 1877--1901. Curran Associates, Inc., 2020.
+\newblock URL
+  \url{https://proceedings.neurips.cc/paper_files/paper/2020/file/1457c0d6bfcb4967418bfb8ac142f64a-Paper.pdf}.
+
+\bibitem[Sclar et~al.(2024)Sclar, Choi, Tsvetkov, and
+  Suhr]{sclar2024quantifyinglanguagemodelssensitivity}
+Melanie Sclar, Yejin Choi, Yulia Tsvetkov, and Alane Suhr.
+\newblock Quantifying language models' sensitivity to spurious features in
+  prompt design or: How {I} learned to start worrying about prompt formatting.
+\newblock In B.~Kim, Y.~Yue, S.~Chaudhuri, K.~Fragkiadaki, M.~Khan, and Y.~Sun,
+  editors, \emph{International Conference on Learning Representations}, volume
+  2024, pages 25055--25083, 2024.
+
+\bibitem[Mizrahi et~al.(2024)Mizrahi, Kaplan, Malkin, Dror, Shahaf, and
+  Stanovsky]{mizrahi2024stateartmultipromptllm}
+Moran Mizrahi, Guy Kaplan, Dan Malkin, Rotem Dror, Dafna Shahaf, and Gabriel
+  Stanovsky.
+\newblock State of what art? {A} call for multi-prompt {LLM} evaluation.
+\newblock \emph{Transactions of the Association for Computational Linguistics},
+  12:\penalty0 933--949, 2024.
+\newblock \doi{10.1162/tacl_a_00681}.
+\newblock URL \url{https://aclanthology.org/2024.tacl-1.52/}.
+
+\bibitem[Deshpande et~al.(2023)Deshpande, Murahari, Rajpurohit, Kalyan, and
+  Narasimhan]{deshpande2023toxicitychatgptanalyzingpersonaassigned}
+Ameet Deshpande, Vishvak Murahari, Tanmay Rajpurohit, Ashwin Kalyan, and
+  Karthik Narasimhan.
+\newblock Toxicity in {ChatGPT}: Analyzing persona-assigned language models.
+\newblock In Houda Bouamor, Juan Pino, and Kalika Bali, editors, \emph{Findings
+  of the Association for Computational Linguistics: EMNLP 2023}, pages
+  1236--1270, Singapore, December 2023. Association for Computational
+  Linguistics.
+\newblock \doi{10.18653/v1/2023.findings-emnlp.88}.
+\newblock URL \url{https://aclanthology.org/2023.findings-emnlp.88/}.
+
+\bibitem[Wallace et~al.(2024)Wallace, Xiao, Leike, Weng, Heidecke, and
+  Beutel]{wallace2024instructionhierarchy}
+Eric Wallace, Kai Xiao, Reimar Leike, Lilian Weng, Johannes Heidecke, and Alex
+  Beutel.
+\newblock The instruction hierarchy: Training {LLMs} to prioritize privileged
+  instructions, 2024.
+\newblock URL \url{https://arxiv.org/abs/2404.13208}.
+
+\bibitem[Zhou et~al.(2023)Zhou, Lu, Mishra, Brahma, Basu, Luan, Zhou, and
+  Hou]{zhou2023instructionfollowingevaluationlarge}
+Jeffrey Zhou, Tianjian Lu, Swaroop Mishra, Siddhartha Brahma, Sujoy Basu,
+  Yi~Luan, Denny Zhou, and Le~Hou.
+\newblock Instruction-following evaluation for large language models, 2023.
+\newblock URL \url{https://arxiv.org/abs/2311.07911}.
+
+\bibitem[Mu et~al.(2023)Mu, Chen, Wang, Chen, Karamardian, Aljeraisy, Alomair,
+  Hendrycks, and Wagner]{mu2023llmsfollowsimplerules}
+Norman Mu, Sarah Chen, Zifan Wang, Sizhe Chen, David Karamardian, Lulwa
+  Aljeraisy, Basel Alomair, Dan Hendrycks, and David Wagner.
+\newblock Can {LLMs} follow simple rules?, 2023.
+\newblock URL \url{https://arxiv.org/abs/2311.04235}.
+
+\bibitem[Zhang et~al.(2025)Zhang, Li, Zhang, Liu, Jiang, Tang, Gao, Li, Wang,
+  Tan, Li, Yin, Yin, and Jiang]{zhang2025ihevalevaluatinglanguagemodels}
+Zhihan Zhang, Shiyang Li, Zixuan Zhang, Xin Liu, Haoming Jiang, Xianfeng Tang,
+  Yifan Gao, Zheng Li, Haodong Wang, Zhaoxuan Tan, Yichuan Li, Qingyu Yin, Bing
+  Yin, and Meng Jiang.
+\newblock {IHEval}: Evaluating language models on following the instruction
+  hierarchy.
+\newblock In Luis Chiruzzo, Alan Ritter, and Lu~Wang, editors,
+  \emph{Proceedings of the 2025 Conference of the Nations of the Americas
+  Chapter of the Association for Computational Linguistics: Human Language
+  Technologies (Volume 1: Long Papers)}, pages 8374--8398, Albuquerque, New
+  Mexico, April 2025. Association for Computational Linguistics.
+\newblock \doi{10.18653/v1/2025.naacl-long.425}.
+\newblock URL \url{https://aclanthology.org/2025.naacl-long.425/}.
+
+\bibitem[He et~al.(2026)He, Zhang, Chen, Chen, Yu, Yuan, and
+  Yiu]{he2025coninstructevaluatinglargelanguage}
+Xingwei He, Qianru Zhang, Pengfei Chen, Guanhua Chen, Linlin Yu, Yuan Yuan, and
+  Siu-Ming Yiu.
+\newblock {ConInstruct}: Evaluating large language models on conflict detection
+  and resolution in instructions.
+\newblock \emph{Proceedings of the AAAI Conference on Artificial Intelligence},
+  40\penalty0 (37):\penalty0 30969--30977, March 2026.
+\newblock \doi{10.1609/aaai.v40i37.40356}.
+\newblock URL \url{https://doi.org/10.1609/aaai.v40i37.40356}.
+
+\bibitem[{Gemini Team} et~al.(2023)]{geminiteam2025geminifamilyhighlycapable}
+{Gemini Team} et~al.
+\newblock Gemini: A family of highly capable multimodal models, 2023.
+\newblock URL \url{https://arxiv.org/abs/2312.11805}.
+
+\bibitem[Comanici et~al.(2025)]{comanici2025gemini25pushingfrontier}
+Gheorghe Comanici et~al.
+\newblock {Gemini 2.5}: Pushing the frontier with advanced reasoning,
+  multimodality, long context, and next generation agentic capabilities, 2025.
+\newblock URL \url{https://arxiv.org/abs/2507.06261}.
+
+\bibitem[Kwon et~al.(2023)Kwon, Li, Zhuang, Sheng, Zheng, Yu, Gonzalez, Zhang,
+  and Stoica]{kwon2023efficientmemorymanagementlarge}
+Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody~Hao Yu,
+  Joseph Gonzalez, Hao Zhang, and Ion Stoica.
+\newblock Efficient memory management for large language model serving with
+  {PagedAttention}.
+\newblock In \emph{Proceedings of the 29th Symposium on Operating Systems
+  Principles}, SOSP '23, pages 611--626. ACM, October 2023.
+\newblock \doi{10.1145/3600006.3613165}.
+\newblock URL \url{https://doi.org/10.1145/3600006.3613165}.
+
+\bibitem[Efron(1979)]{10.1214/aos/1176344552}
+B.~Efron.
+\newblock {Bootstrap Methods: Another Look at the Jackknife}.
+\newblock \emph{The Annals of Statistics}, 7\penalty0 (1):\penalty0 1--26,
+  1979.
+\newblock \doi{10.1214/aos/1176344552}.
+\newblock URL \url{https://doi.org/10.1214/aos/1176344552}.
+
+\bibitem[Efron and Tibshirani(1994)]{efron1994introductionbootstrap}
+Bradley Efron and R.J. Tibshirani.
+\newblock \emph{An Introduction to the Bootstrap}.
+\newblock Chapman and Hall/CRC, May 1994.
+\newblock ISBN 9780429246593.
+\newblock \doi{10.1201/9780429246593}.
+\newblock URL \url{https://doi.org/10.1201/9780429246593}.
+
+\bibitem[Hu et~al.(2022)Hu, Shen, Wallis, Allen-Zhu, Li, Wang, Wang, and
+  Chen]{hu2021loralowrankadaptationlarge}
+Edward~J Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean
+  Wang, Lu~Wang, and Weizhu Chen.
+\newblock {LoRA}: Low-rank adaptation of large language models.
+\newblock In \emph{International Conference on Learning Representations}, 2022.
+\newblock URL \url{https://openreview.net/forum?id=nZeVKeeFYf9}.
+
+\bibitem[Hui et~al.(2024)]{hui2024qwen25codertechnicalreport}
+Binyuan Hui et~al.
+\newblock {Qwen2.5-Coder} technical report, 2024.
+\newblock URL \url{https://arxiv.org/abs/2409.12186}.
+
+\bibitem[Yang et~al.(2025{\natexlab{a}})]{yang2025qwen3technicalreport}
+An~Yang et~al.
+\newblock {Qwen3} technical report, 2025{\natexlab{a}}.
+\newblock URL \url{https://arxiv.org/abs/2505.09388}.
+
+\bibitem[Grattafiori et~al.(2024)Grattafiori, Dubey, Jauhri, Pandey, Kadian,
+  et~al.]{grattafiori2024llama3herdmodels}
+Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek
+  Kadian, et~al.
+\newblock The {Llama 3} herd of models, 2024.
+\newblock URL \url{https://arxiv.org/abs/2407.21783}.
+
+\bibitem[{Gemma Team} et~al.(2026)]{gemmateam2026gemma4technicalreport}
+{Gemma Team} et~al.
+\newblock {Gemma 4} technical report, 2026.
+\newblock URL \url{https://arxiv.org/abs/2607.02770}.
+
+\bibitem[Yang et~al.(2025{\natexlab{b}})]{qwen2025qwen25technicalreport}
+An~Yang et~al.
+\newblock {Qwen2.5} technical report, 2025{\natexlab{b}}.
+\newblock URL \url{https://arxiv.org/abs/2412.15115}.
+
+\bibitem[{Qwen Team}(2026)]{qwen2026qwen3codernext}
+{Qwen Team}.
+\newblock {Qwen3-Coder-Next} technical report.
+\newblock Technical report, Alibaba Cloud, 2026.
+\newblock URL
+  \url{https://github.com/QwenLM/Qwen3-Coder/blob/main/qwen3_coder_next_tech_report.pdf}.
+\newblock Model card: \url{https://huggingface.co/Qwen/Qwen3-Coder-Next}.
+
+\bibitem[{Meta}(2024)]{meta2024llama33modelcard}
+{Meta}.
+\newblock {Llama 3.3} model card.
+\newblock
+  \url{https://github.com/meta-llama/llama-models/blob/main/models/llama3_3/MODEL_CARD.md},
+  December 2024.
+\newblock 70B Instruct released 6 December 2024.
+
+\bibitem[{Team GLM} et~al.(2024)]{glm2024chatglmfamilylargelanguage}
+{Team GLM} et~al.
+\newblock {ChatGLM}: A family of large language models from {GLM-130B} to
+  {GLM-4} all tools, 2024.
+\newblock URL \url{https://arxiv.org/abs/2406.12793}.
+
+\bibitem[{Z.ai}(2025{\natexlab{a}})]{zai2025glm49b0414}
+{Z.ai}.
+\newblock {GLM-4-9B-0414}.
+\newblock Hugging Face model card,
+  \url{https://huggingface.co/zai-org/GLM-4-9B-0414}, April 2025{\natexlab{a}}.
+
+\bibitem[{Z.ai}(2025{\natexlab{b}})]{zai2025glm432b0414}
+{Z.ai}.
+\newblock {GLM-4-32B-0414}.
+\newblock Hugging Face model card,
+  \url{https://huggingface.co/zai-org/GLM-4-32B-0414}, April
+  2025{\natexlab{b}}.
+
+\bibitem[{GLM-4.5 Team} et~al.(2025)]{glm45team2025glm45agenticreasoningcoding}
+{GLM-4.5 Team} et~al.
+\newblock {GLM-4.5}: Agentic, reasoning, and coding ({ARC}) foundation models,
+  2025.
+\newblock URL \url{https://arxiv.org/abs/2508.06471}.
+
+\bibitem[{Gemma Team} et~al.(2025)]{gemmateam2025gemma3technicalreport}
+{Gemma Team} et~al.
+\newblock {Gemma 3} technical report, 2025.
+\newblock URL \url{https://arxiv.org/abs/2503.19786}.
+
+\bibitem[{Mistral AI}(2025)]{mistral2025small24binstruct2501}
+{Mistral AI}.
+\newblock {Mistral-Small-24B-Instruct-2501}.
+\newblock Hugging Face model card,
+  \url{https://huggingface.co/mistralai/Mistral-Small-24B-Instruct-2501},
+  January 2025.
+
+\bibitem[{DeepSeek-AI}
+  et~al.(2024)]{deepseekai2024deepseekcoderv2breakingbarrierclosedsource}
+{DeepSeek-AI} et~al.
+\newblock {DeepSeek-Coder-V2}: Breaking the barrier of closed-source models in
+  code intelligence, 2024.
+\newblock URL \url{https://arxiv.org/abs/2406.11931}.
+
+\bibitem[Pathak et~al.(2025)Pathak, Gandhi, Uttam, Ramamoorthy, Ghosh, Jindal,
+  Verma, Mittal, Ased, Khatri, Nakka, Devansh, Challa, and
+  Kumar]{pathak2025rubricneedenhancingllmbased}
+Aditya Pathak, Rachit Gandhi, Vaibhav Uttam, Arnav Ramamoorthy, Pratyush Ghosh,
+  Aaryan~Raj Jindal, Shreyash Verma, Aditya Mittal, Aashna Ased, Chirag Khatri,
+  Yashwanth Nakka, Devansh, Jagat~Sesh Challa, and Dhruv Kumar.
+\newblock Rubric is all you need: Improving {LLM}-based code evaluation with
+  question-specific rubrics.
+\newblock In \emph{Proceedings of the 2025 {ACM} Conference on International
+  Computing Education Research V.1}, ICER '25, pages 181--195. ACM, 2025.
+\newblock \doi{10.1145/3702652.3744220}.
+\newblock URL \url{https://doi.org/10.1145/3702652.3744220}.
+
+\bibitem[Chan et~al.(2024)Chan, Chen, Su, Yu, Xue, Zhang, Fu, and
+  Liu]{chan2023chatevalbetterllmbasedevaluators}
+Chi-Min Chan, Weize Chen, Yusheng Su, Jianxuan Yu, Wei Xue, Shanghang Zhang,
+  Jie Fu, and Zhiyuan Liu.
+\newblock {ChatEval}: Towards better {LLM}-based evaluators through multi-agent
+  debate.
+\newblock In B.~Kim, Y.~Yue, S.~Chaudhuri, K.~Fragkiadaki, M.~Khan, and Y.~Sun,
+  editors, \emph{International Conference on Learning Representations}, volume
+  2024, pages 9079--9093, 2024.
+
+\end{thebibliography}

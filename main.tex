@@ -1,0 +1,80 @@
+\documentclass{article}
+
+\usepackage{PRIMEarxiv}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{siunitx}
+\sisetup{group-separator={,}, group-minimum-digits=4}
+\graphicspath{{media/}}
+
+\pagestyle{fancy}
+\thispagestyle{empty}
+\rhead{\textit{}}
+\fancyhead[LO]{Where LLM graders succeed and break}
+
+\title{Where LLM Graders Succeed and Break: \\ Evidence from Two Computer-Science Exams}
+
+
+\author{%
+  Ali Habibullah\thanks{Equal contribution.}\hspace{0.35em}\textsuperscript{,}\thanks{Corresponding author.} \ , Yazan Alshoibi\footnotemark[1] \ \& Mohammad Alshiekh\footnotemark[1] \\
+  KAUST Academy \\
+  Computer, Electrical \& Mathematical Sciences \& Engineering (CEMSE) \\
+  King Abdullah University of Science and Technology (KAUST) \\
+  Thuwal, Saudi Arabia \\
+  \texttt{\{ali.habibullah, yazen.shaebi, mohammad.shiekh\}@kaust.edu.sa} \\
+  \AND
+  Salman Khan \\
+  Visual Artificial Intelligence Laboratory \\
+  Oxford Brookes University \\
+  \texttt{salmankhan@brookes.ac.uk} \\
+  \And
+  Naeemullah Khan \\
+  KAUST Academy \& CEMSE, KAUST \\
+  Lady Margaret Hall, University of Oxford \\
+  \texttt{naeemullah.khan@kaust.edu.sa}
+}
+
+\newcommand{\repourl}{\url{https://github.com/KAUST-Academy/where-llm-graders-succeed-and-break}}
+\newcommand{\artifactsshipin}{are released at \repourl}
+\newcommand{\artifactsin}{in the accompanying repository}
+\newcommand{\artifactsnote}{\footnote{Code, data and results: \repourl.}}
+
+\begin{document}
+\maketitle
+\input{sections/abstract}
+
+\keywords{LLM auto-grading \and prompt brittleness \and instruction-following \and persona effects \and open-weights evaluation \and LoRA fine-tuning \and educational assessment}
+
+\input{sections/intro}
+\input{sections/related}
+\input{sections/setup}
+\input{sections/floor}
+\input{sections/brittleness}
+\input{sections/closed_model}
+\input{sections/open_model}
+\input{sections/finetuning}
+\input{sections/discussion}
+\input{sections/limitations}
+\input{sections/conclusion}
+\input{sections/statements}
+\section*{Acknowledgments}
+We thank all graders whose grading produced the human ground truth, and the course instructors for permission to use the anonymised exam data. For computer time, this research used Ibex managed by the Supercomputing Core Laboratory at King Abdullah University of Science \& Technology (KAUST) in Thuwal, Saudi Arabia.
+
+\bibliographystyle{unsrtnat}
+\bibliography{references}
+
+\input{sections/appendix}
+
+\end{document}

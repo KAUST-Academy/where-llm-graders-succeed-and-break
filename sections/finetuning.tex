@@ -1,0 +1,117 @@
+\section{Fine-Tuning Repairs the Strict-Persona Collapse}
+\label{sec:finetune}
+
+  So far we have changed only the prompt. We have better material than prompts: two
+  humans graded every submission in both exams. In this section we use their
+  grades to fine-tune the models with LoRA~\citep{hu2021loralowrankadaptationlarge}.
+  We fine-tune five small open models ($4$B to $30$B). Each model gets three
+  adapters: one per exam, and one trained on both exams pooled (about
+  $3{,}900$ examples). Three things happen. With the pooled
+  adapter, every model grades as well as a human or better, on both exams.
+  The skill transfers: an adapter trained on one exam also gets better at the
+  other, without ever seeing it. And the persona problem is gone. The prompt
+  that adds as much as $20$ MAE points to a base model barely moves the fine-tuned
+  one.
+
+\subsection{Setup}
+\label{sec:finetune:setup}
+
+  We fine-tune five open models across three families and sizes from $4$B to
+  $30$B parameters with LoRA: Qwen2.5-Coder-$7$B and
+  $14$B~\citep{hui2024qwen25codertechnicalreport},
+  Qwen3-Coder-$30$B-A$3$B~\citep{yang2025qwen3technicalreport},
+  Llama-3.1-$8$B~\citep{grattafiori2024llama3herdmodels}, and Gemma-4-E$4$B~\citep{gemmateam2026gemma4technicalreport}.
+  Training hyperparameters are in Appendix~\ref{app:ft}. Each exam uses a seed-fixed $80/20$ student split: $456/114$ on the
+  CV exam, giving $1{,}494$ training
+  examples, and $830/208$ on the ML exam, giving $2{,}413$.
+  The ML exam records one grade per question with the bonus
+  folded in, so we split each grade into a score up to the base cap and the
+  remainder as bonus. We train three adapters per model: one per exam and
+  one pooled. The pooled training set is the union of the two train splits,
+  so no adapter ever sees a held-out student. We evaluate all three, plus the
+  untuned base, on both held-out sets. On the held-out students, the two human graders disagree with each other by
+  $2.83$ marks on average on the CV exam and $5.19$ on the
+  ML exam. These are the floors: a grader that disagrees with
+  the humans by less than this agrees with them better than they agree with
+  each other. We use two training recipes with identical prompts. The \emph{marks}
+  recipe averages the two graders' scores into a single target, one example
+  per student and question, with a \{score, bonus\} output format. The
+  \emph{bd} (breakdown) recipe additionally distils a per-task breakdown from
+  Gemini~3 Flash Preview (run D$01$), without its reasoning text.
+\subsection{One adapter reaches human parity or better on both exams}
+\label{sec:finetune:parity}
+
+  Every untuned base grades worse than a human on both exams and
+  mis-calibrates in opposite directions: Llama-3.1-$8$B reads $19.8$ on the
+  CV exam where the grader average is $25.3$, yet $40.5$ on the
+  ML exam where it is $30.9$. With a score standard deviation
+  of $2.1$, it barely distinguishes the CV exam's students at
+  all. The pooled fine-tune produces better results on both exams: it lands
+  at $1.75$--$2.01$ MAE on the CV exam and $3.29$--$3.53$ on the
+  ML exam (marks recipe; Table~\ref{tab:ftmain}), revives the collapsed
+  score spread on the CV exam ($\sigma$ from $2.1 \to 7.3$--$7.5$,
+  against $8.0$ for the grader average), and replaces the bases' bias of
+  $-5.9$ to $+9.5$ marks with under one mark of generosity ($+0.2$ to $+0.9$)
+  on both exams.
+
+Because MAE against a two-grader \emph{average} is easier than any single grader faces (Section~\ref{sec:floor}), the verdicts come from a paired third-grader test:
+\begin{equation}
+d_i \;=\; \tfrac{1}{2}\big(|\mathrm{AI}_i-\mathrm{G}_{1,i}| + |\mathrm{AI}_i-\mathrm{G}_{2,i}|\big) \;-\; |\mathrm{G}_{1,i}-\mathrm{G}_{2,i}|.
+\label{eq:paired}
+\end{equation}
+Pairing removes per-student exam difficulty; averaging $d$ over the held-out students with a $95\%$ CI, an interval containing $0$ means the AI is statistically indistinguishable from a human grader, entirely below $0$ that it disagrees with the humans \emph{less than they disagree with each other}, entirely above, worse. Below zero is possible because $|\mathrm{G}_1-\mathrm{G}_2|$ carries \emph{two} graders' idiosyncratic noise while $|\mathrm{AI}-\mathrm{G}_i|$ carries one human's plus the model's; the AI beats the floor exactly when its own noise is smaller than a single human's. With no ground truth beyond the graders, \emph{better}
+  here means more reliable, not more correct: added to the grading pool, the
+  model would introduce less disagreement than another human.
+
+All base configurations are significantly worse than a human grader on both exams. The pooled marks adapter is significantly \emph{better} in $9$ of $10$ (model $\times$ exam) cells: all five models on the ML exam ($\overline{d}$
+  from $-0.94$ to $-1.13$, every CI below zero) and four of five on the CV. The pooled bd adapter reaches at least parity in all $10$ cells and is better in two. No cell on either exam reads worse (Table~\ref{tab:ftpaired},
+  Appendix~\ref{app:ft}). The ML exam sets a lower bar because its two graders disagree more (floor $5.19$ vs.\ $2.83$), but every point estimate there is negative regardless.
+
+\subsection{Grading skill transfers across exams}
+\label{sec:finetune:transfer}
+
+An adapter fine-tuned on one exam improves grading on the other, which it never saw: mean MAE on the ML exam falls from $7.95$ (base) to $5.36$ under the CV-exam adapter, and on the CV exam from $5.54$ to $3.57$ under the ML-exam adapter. Every model improves in both directions, with one exception discussed in Section~\ref{sec:finetune:choices}. Transfer stops short of in-domain performance ($3.54$ and $1.90$), but pooling closes the gap for free: the pooled adapter matches or beats each specialist \emph{on the specialist's own exam} in all eight (exam $\times$ recipe) columns (Table~\ref{tab:ftmain}).
+
+\begin{table}[t]
+\centering
+\caption{Held-out MAE vs.\ the grader average by training set (marks recipe; bd in Table~\ref{tab:ftmeans}, Appendix~\ref{app:ft}). The cross columns are transfer; pooled matches or beats each specialist on its own exam. $\ddagger$: the one negative transfer cell (Section~\ref{sec:finetune:choices}).}
+\label{tab:ftmain}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+& \multicolumn{4}{c}{CV exam ($n{=}114$)} & \multicolumn{4}{c}{ML exam ($n{=}208$)} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+Model & base & CV & ML & pooled & base & CV & ML & pooled \\
+\midrule
+Qwen2.5-Coder-7B    & 6.60 & 1.93 & 3.22 & \textbf{1.84} & 6.48 & 6.37 & 3.67 & \textbf{3.40} \\
+Qwen2.5-Coder-14B   & 4.06 & 1.89 & 3.29 & \textbf{1.89} & 7.70 & 5.41 & 3.35 & \textbf{3.29} \\
+Qwen3-Coder-30B-A3B & 4.76 & 1.80 & 2.59 & \textbf{1.75} & 8.60 & 5.22 & 3.67 & \textbf{3.45} \\
+Gemma-4-E4B         & 4.29 & 1.88 & 3.79 & \textbf{1.88} & 4.66 & 4.79$^\ddagger$ & 3.51 & 3.53 \\
+Llama-3.1-8B        & 7.99 & 1.99 & 4.95 & \textbf{2.01} & 12.30 & 5.02 & 3.48 & \textbf{3.37} \\
+\midrule
+mean                & 5.54 & 1.90 & 3.57 & \textbf{1.87} & 7.95 & 5.36 & 3.54 & \textbf{3.41} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Fine-tuning immunises against the strict-persona collapse}
+\label{sec:finetune:personas}
+
+  We re-run the persona sweep for base and pooled models on both exams (Tables~\ref{tab:ftpersona} and~\ref{tab:ftpersonafull}, Appendix~\ref{app:ft}). The bases reproduce the collapse on both exams: under
+  \emph{strict}, Qwen2.5-Coder-$14$B goes $4.06 \to 23.81$ on the CV exam, and Llama-3.1-$8$B reaches MAE $30.9$ on the ML with bias $-30.9$: it scores nearly every student zero. The pooled adapters are flat everywhere: at most
+  $+0.32$ (marks) and $+0.62$ (bd) across three personas, two exams and five models, and the catastrophic tail the collapse creates is gone: under a neutral prompt the worst base mis-grades $43$ of $114$ CV-exam students by more than
+  $10$ marks, while every pooled model is at $0$--$1$. On the CV exam the \emph{strict} preset is the most destructive on every base, as Section~\ref{sec:brittle:attrib} predicts: it alone carries the two policy sentences. The per-exam adapters had one immunity failure, and pooling fixes it: Llama-bd under \emph{strict} sat at $4.08$ when tuned on the CV exam alone and drops to $2.67$ with pooled training.
+
+  On the ML exam \emph{strict} sometimes improves a base model (Qwen3-Coder-$30$B: $8.60 \to 6.34$). This is not the persona working. The bases over-grade the ML exam, and the induced harshness happens to cancel part of the bias, the
+  accidental calibration of Section~\ref{sec:brittle:replication} again. So the same wording that destroys a model on one exam helps it on the other. An effect that flips sign between exams is not a calibration knob.
+  
+
+\subsection{What matters, what does not}
+\label{sec:finetune:choices}
+
+  Size and family remain nearly irrelevant. The five pooled marks fine-tunes converge to $1.75$--$2.01$ MAE on the CV exam and $3.29$--$3.53$ on the ML, and starting quality does not predict the tuned result: Llama-3.1-$8$B starts
+  worst on both exams ($7.99$, $12.30$) and finishes with everyone else ($2.01$, $3.37$).   Human labels alone suffice: pooled marks matches or beats pooled bd on every (model, exam) cell, decisively on the ML exam ($3.41$ vs.\ $4.15$ mean). Nine of the eleven better verdicts in the paired test are marks verdicts, and
+  marks needs no closed-model teacher. Which exam the labels come from matters less than having labels at all, with one exception. Gemma-4-E$4$B is the
+  strongest base on the ML exam ($4.66$) and the only model that cross-exam transfer fails to help there ($4.79^\ddagger$), and in-domain labels move it only to $3.51$: fine-tuning buys the most where the base grades worst, and
+  Gemma had the least room to improve. The residual errors concentrate on the students the two human graders also disagree on (correlation $+0.35$ to $+0.48$ for every pooled model, against no consistent relationship for the bases; Appendix~\ref{app:ft}): the tuned models are unsure exactly where the rubric is ambiguous.

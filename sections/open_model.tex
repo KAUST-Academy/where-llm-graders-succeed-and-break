@@ -1,0 +1,10 @@
+\section{Open-Weights Configurations Under Neutral Prompts}
+\label{sec:open}
+
+Under neutral prompts nothing stands out: the $17$ baselines span $2.85$ to $7.49$ MAE, no family dominating or collapsing (Table~\ref{tab:openbaselines}, Appendix~\ref{app:open}); none of it predicts which stop grading under a persona sentence. Scaling is not monotone: Qwen2.5-Coder improves from $7$B to $14$B ($5.68\to3.51$) then regresses at $32$B ($7.49$, bias $-7.35$); dropping the reference solution recovers $3.12$, consistent with over-anchoring on it, though exam-locally: the same removal moves it $+0.16$ on the ML exam. Within Qwen3-Coder the $30$B-A$3$B MoE beats the $80$B Coder-Next ($4.50$ vs.\ $5.17$), reversing at $480$B ($3.14$).
+
+\paragraph{GLM-4-32B takes four of the five best open-weights slots.}
+Its best (rubric breakdown removed, neutral; L-BD$07$), $2.68$, is the grid's strongest open-weights grader (Table~\ref{tab:allruns}); L-X$04$ (\emph{rigorous}) reaches $2.74$, essentially unbiased; the fifth slot, Qwen3-Coder-Next $+$ \emph{lenient} ($2.81$) is a bias-correction artifact, not capability. Two gaps to D01 ($1.64$): just over one point on best achievable, $1.42$ on best surviving a persona sentence (Qwen3-Coder-$480$B under \emph{rigorous}, $3.06$; L-R$04$), since GLM-4-32B collapses to $9.66$ under \emph{strict}.
+
+\paragraph{Model choice beats size.}
+The $30$B-A$3$B beats the $80$B, the $14$B the $32$B, the $72$B dense the $235$B MoE; the $480$B's edge is persona robustness: at neutral it only ties the $72$B. \emph{Which} model is a property of the exam, not the model: across the $17$ run on both, neutral MAE is uncorrelated ($\rho=-0.07$) and Qwen2.5-Coder-$32$B, weakest here, ties statistically for best there. Open-weights graders are practically viable, but only zero-shot on a prompt guaranteed never to carry a strict-flavoured persona (Section~\ref{sec:brittle}), which Section~\ref{sec:finetune} removes with in-house labels.

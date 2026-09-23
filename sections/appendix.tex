@@ -1,0 +1,811 @@
+\clearpage
+\appendix
+
+\section{Experimental Details}
+\label{app:details}
+
+\paragraph{The CV exam in full.}
+The CV exam's $570$ submissions answer four code questions: \textbf{Q1} transfer learning with EfficientNetV2, \textbf{Q2} a CNN from scratch, \textbf{Q3} semantic segmentation with a pretrained encoder, \textbf{Q4} a colorization-dataset bonus. Beyond the $35$ base points (weights $12$ / $11$ / $12$) sit up to $13$ bonus points (Q1, Q2 and an all-or-nothing $5$-point Q4), graded but excluded from every reported metric.
+
+\paragraph{Model roster and serving.}
+On the closed-model side we use Google's \texttt{gemini-2.5-pro}~\citep{comanici2025gemini25pushingfrontier} and \texttt{gemini-flash-lite}, \texttt{gemini-3-flash-preview}, and \texttt{gemini-3.1-pro-preview}, for which no technical report was available at the time of writing, via the Vertex API~\citep{geminiteam2025geminifamilyhighlycapable}. Two further vendors enter only in the cross-vendor replication of Section~\ref{sec:closed:vendors}: OpenAI's \texttt{gpt-5.5} and \texttt{gpt-5.4} and Anthropic's \texttt{claude-opus-5} (Appendix~\ref{app:closed}, Table~\ref{tab:closedvendors}). On the open-weights side we use $17$ variants from six vendors. From Qwen: Qwen2.5-Coder at $7$B / $14$B / $32$B~\citep{hui2024qwen25codertechnicalreport} and the Qwen2.5 $72$B dense model~\citep{qwen2025qwen25technicalreport}, and from the Qwen3 family the Qwen3-Coder $30$B-A$3$B MoE, the $235$B-A$22$B MoE, and the $480$B Qwen3-Coder MoE in FP8~\citep{yang2025qwen3technicalreport}, and the $80$B Qwen3-Coder-Next MoE~\citep{qwen2026qwen3codernext}. From Meta: Llama-3.1-$8$B~\citep{grattafiori2024llama3herdmodels} and Llama-3.3-$70$B~\citep{meta2024llama33modelcard}. Z.ai: GLM-4-$9$B and GLM-4-$32$B, the $0414$ releases~\citep{glm2024chatglmfamilylargelanguage,zai2025glm49b0414,zai2025glm432b0414}, and the $106$B GLM-4.5-Air MoE~\citep{glm45team2025glm45agenticreasoningcoding}. Google: Gemma-3-$12$B and Gemma-3-$27$B~\citep{gemmateam2025gemma3technicalreport}. Mistral: Mistral-Small-$24$B~\citep{mistral2025small24binstruct2501}. DeepSeek: the $16$B DeepSeek-Coder-V2-Lite MoE ($2.4$B active)~\citep{deepseekai2024deepseekcoderv2breakingbarrierclosedsource}. Serving is vLLM~\citep{kwon2023efficientmemorymanagementlarge} on one $4 \times$~A100 node, or $8 \times$ for Qwen2.5-$72$B, $235$B-A$22$B and the $480$B FP8 model.
+
+Open-weights generation is \emph{unconstrained}: the grader requests JSON in the prompt and parses the reply, with no grammar or schema enforcement at decode time (Vertex calls do pass a JSON response schema). A controlled A/B confirms that grammar-constrained decoding changes no score and costs $6.9\times$ in latency. Every open-weights grid run uses vLLM \texttt{0.19.1} or later, greedy decoding at temperature $0$ --- the $t = 0.5$ probes L-E$01$/L-E$02$ (Appendix~\ref{sec:closed:variance}) excepted --- and one request in flight. \paragraph{Notebook serialisation, parsing and retries.}
+Every call receives one question's notebook as plain text --- a \texttt{--- Cell $k$ [code|markdown] ---} header then the cell's source --- with every output dropped: training logs, printed metrics and rendered plots or masks (base64 media) never reach the model. Nothing is truncated in the grid; the fine-tuning harness alone head-and-tail-truncates to $24{,}000$ characters. Replies are parsed as JSON; the open-weights path falls back from strict parsing to a lenient parse and then to \texttt{json\_repair}, the Vertex path parses strictly against its response schema. A Vertex call is retried up to three times with a $2s \times$ attempt back-off, except that a \texttt{MAX\_TOKENS} finish is not retried because it is deterministic at $t = 0$; the open-weights path does not retry a truncated or unparseable reply at $t = 0$ for the same reason. A question with no score after the run's retries and resumes is a permanent failure, and the student is excluded from that run's metrics as described under \emph{Exclusions}.
+
+\paragraph{Ablation-grid legend.}
+Appendix~\ref{app:runs} tabulates the grid's $33$ closed-model ($25$ Gemini, $6$ OpenAI, $2$ Anthropic) and $138$ open-weights runs; the machine-readable master comparison ships \artifactsin. Gemini series: \textbf{A} = baseline ($n{=}1$); \textbf{B} = prompt-component ablations on Flash-Lite ($n{=}4$: B$01$ drop solution, B$02$ drop guidelines, B$03$ thinking on, B$04$ drop breakdown); \textbf{C} = strictness persona on Flash-Lite ($n{=}2$); \textbf{D} = model swap ($n{=}3$); \textbf{E} = temperature variance ($n{=}3$); \textbf{F} = combos and the 3.1 Pro strict run ($n{=}3$); \textbf{G}, \textbf{M} = prompt ablations and persona on \texttt{gemini-3-flash-preview} ($n{=}4$, $n{=}2$); \textbf{K} = few-shot ($n{=}1$); \textbf{P} = alternate-wording personas on Flash-Lite ($n{=}2$). Cross-vendor closed series (batch APIs; Section~\ref{sec:closed:vendors}): \textbf{O} = OpenAI, \texttt{gpt-5.5} (O$01$--O$03$) and \texttt{gpt-5.4} (O$11$--O$13$) under \emph{neutral}, \emph{strict} and \emph{lenient} ($n{=}6$); \textbf{N} = Anthropic \texttt{claude-opus-5} under \emph{neutral} and \emph{strict} ($n{=}2$).
+
+Open-weights series (prefixed \textbf{L-}) fall in three groups. \emph{Qwen ablations:} \textbf{L-A}/\textbf{L-AN} = per-model baselines ($n{=}5$); on Qwen2.5-Coder-32B, \textbf{L-B} = prompt-component ablations ($n{=}4$), \textbf{L-C} = persona ($n{=}2$) and \textbf{L-P} = alternate wordings ($n{=}2$); \textbf{L-D}/\textbf{L-DN} = $+$thinking on Qwen3 MoE ($n{=}2$); \textbf{L-E} = temperature variance ($n{=}2$); \textbf{L-G}, \textbf{L-H} = prompt ablations replayed on the $30$B and $7$B ($n{=}6$); \textbf{L-K} = few-shot ($n{=}1$); \textbf{L-M} = persona on additional Qwen models ($n{=}7$); \textbf{L-N}, \textbf{L-Q}, \textbf{L-R} = full five-persona sweeps on Qwen2.5-$72$B, Qwen3-$235$B-A$22$B and Qwen3-Coder-$480$B FP8 ($n{=}15$). \emph{Cross-family sweeps}, each five personas on all $570$ students: \textbf{L-S} = DeepSeek-Coder-V2-Lite; \textbf{L-U} = Llama-3.1-$8$B; \textbf{L-V} = Llama-3.3-$70$B; \textbf{L-W} = GLM-4-$9$B; \textbf{L-X} = GLM-4-$32$B; \textbf{L-J} = GLM-4.5-Air; \textbf{L-F} = Gemma-3-$12$B; \textbf{L-Y} = Gemma-3-$27$B; \textbf{L-Z} = Mistral-Small-$24$B ($n{=}45$). \emph{Mechanism probes:} \textbf{L-MP} = minimal pairs isolating the persona's headword from its policy sentences, on five models ($n{=}25$); \textbf{L-PS} = the $2\times2$ over the two policy sentences, on three models ($n{=}12$); \textbf{L-BD} = rubric-breakdown removal crossed with persona, on five models ($n{=}10$).
+
+G- and M-series Gemini configurations run on the first $100$ students, \texttt{gemini-3-flash-preview} throughput being the binding constraint; comparisons against full-$n$ baselines restrict the baseline to the matching subset.
+
+\paragraph{Gemini thinking configuration.}
+The Vertex API exposes an internal reasoning budget, \texttt{thinking\_budget}. We run $21$ of the $25$ Gemini ablations with thinking \emph{disabled} (\texttt{thinking\_budget} $= 0$) and three (B$03$, F$01$, G$03$) \emph{enabled} at the dynamic budget ($-1$; the model picks the per-call budget). The exception is D$03$: \texttt{gemini-2.5-pro} rejects \texttt{thinking\_budget} $= 0$, so it ran under that model's default dynamic policy and reads as thinking-enabled (Section~\ref{sec:limitations}).
+
+\paragraph{Exclusions.}
+A student with any of Q$1$--Q$3$ ungraded after retries is excluded from that run's metrics rather than scored with a partial total: no students in most runs, at most $3$ elsewhere, the exceptions being P$02$ ($13$) and the temperature-variance E-series, where a student is kept only if all of Q$1$--Q$3$ were graded in at least one rerun ($21$ in E$01$, $7$ each in E$02$/E$03$); per-run $n$ accompanies the affected tables. P$02$'s $13$ are genuine permanent failures, one question each ($6$ on Q$1$, $7$ on Q$2$); E$01$'s $21$ are $14$ such failures plus the $7$ students who submitted no notebook for at least one of Q$1$--Q$3$, and E$02$/E$03$'s $7$ are those non-submitters alone --- neither run suffered a grading failure. Only the E-series rerun rule drops a non-submitter: every single-call run keeps them and scores the missing question $0$, and restoring them that way moves the E-series MAE by $-0.03$ ($3.38 \to 3.36$, $3.51 \to 3.48$, $3.60 \to 3.57$). No log survives for these four runs, so we cannot quote a \texttt{finish\_reason}; where logs do survive (the ML exam's Gemini grid and F$03$), $705$ of $709$ permanently failed cells are \texttt{MAX\_TOKENS} truncations and the other $4$ JSON parse errors, with $429$, $503$ and dropped connections retryable and no safety block at all. The artifacts agree: a failure burns $149$--$316$ s (P$02$, one call) or $2{,}095$--$2{,}529$ s (E$01$, five reruns) against a $5$--$6$ s normal call; E$01$'s $14$ cells fail $5/5$ at $t = 0$ yet grade $5/5$ at $t = 0.5$ and $0.7$; and the longest prompt, $39{,}418$ characters ($\approx 10{,}000$ tokens) against a million-token window, leaves only the $65{,}535$-token output cap to bind. Unlike the ML exam's few-shot Flash-Lite run (Appendix~\ref{app:replication}), the dropout is neither length- nor ability-biased: excluded notebooks are no longer than survivors' (P$02$ $29{,}433$ vs.\ $31{,}625$ characters, Welch $p = 0.35$; E$01$'s $14$, $31{,}657$ vs.\ $31{,}772$, $p = 0.90$) and their grader-average totals match ($26.9$ vs.\ $26.0$ out of $35$, $p = 0.69$; $26.0$ vs.\ $26.2$, $p = 0.91$). E-series per-question scores are the mean over all recorded reruns (five per cell by design; some Gemini cells logged more) and the total is the Q$1$--Q$3$ base sum as elsewhere.
+
+\paragraph{Item-level agreement.}
+Table~\ref{tab:itemcorr} gives per-question and total-level Spearman $\rho$ between the AI mark and the grader-average mark for the headline configurations of both exams.
+
+\begin{table}[t]
+\centering
+\caption{Item-level agreement for both exams' headline configurations: Spearman $\rho$ between the AI mark and the grader-average mark, per question and at total level, over the same students each run's MAE uses. The total is the optimistic number: across the $40$ CV and $38$ ML runs measured here (the rows below plus each exam's $17$ matched neutral/strict pairs; Table~\ref{tab:brittle}, Section~\ref{sec:brittle:replication}), it exceeds the weakest question's $\rho$ in all $37$ CV and $37$ ML runs where every correlation is defined --- median gap $0.20$ (CV), $0.12$ (ML), and at least $0.15$ in $30$ CV and $12$ ML runs. The other three CV and one ML runs give every student the same mark, leaving their correlations undefined rather than zero. The weak item is the same within an exam: Q$2$ on CV ($30$ of $37$), Q$1$ on ML ($27$ of $37$). Pearson $r$ differs from $\rho$ by a median of $0.02$ on both exams. Generated by \texttt{analysis/checks/per\_question\_rank\_correlation.py}.}
+\label{tab:itemcorr}
+\small
+\begin{tabular}{lllrrrrr}
+\toprule
+Run & Model & Persona & $n$ & Q$1$ $\rho$ & Q$2$ $\rho$ & Q$3$ $\rho$ & Total $\rho$ \\
+\midrule
+\multicolumn{8}{l}{\emph{CV exam}} \\
+D01 & gemini-3-flash-preview & \emph{neutral} & 570 & 0.92 & 0.90 & 0.91 & 0.95 \\
+D02 & gemini-3.1-pro-preview & \emph{neutral} & 570 & 0.92 & 0.90 & 0.90 & 0.94 \\
+F02 & gemini-3.1-pro-preview & \emph{lenient} & 570 & 0.92 & 0.90 & 0.91 & 0.94 \\
+B03 & gemini-flash-lite + thinking & \emph{neutral} & 570 & 0.89 & 0.88 & 0.87 & 0.92 \\
+A01 & gemini-flash-lite & \emph{neutral} & 570 & 0.77 & 0.65 & 0.83 & 0.84 \\
+C01 & gemini-flash-lite & \emph{strict} & 570 & 0.78 & 0.59 & 0.81 & 0.83 \\
+\midrule
+\multicolumn{8}{l}{\emph{ML exam}} \\
+IG08 & gemini-3.1-pro-preview & \emph{neutral} & 1038 & 0.88 & 0.91 & 0.93 & 0.93 \\
+IG07 & gemini-3-flash-preview & \emph{neutral} & 1038 & 0.86 & 0.91 & 0.94 & 0.93 \\
+IG01 & gemini-flash-lite & \emph{neutral} & 1013 & 0.77 & 0.85 & 0.85 & 0.88 \\
+IG05 & gemini-flash-lite & \emph{strict} & 1008 & 0.78 & 0.81 & 0.86 & 0.88 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\clearpage
+\section{Strict-Persona Collapse: Additional Tables}
+\label{app:brittle}
+
+This appendix carries the full exhibits behind Section~\ref{sec:brittle}.
+
+\begin{table}[t]
+\centering
+\caption{The \emph{strict} persona against each model's own \emph{neutral} baseline at an identical prompt configuration. MAE in points out of $35$; ratio is strict $\div$ neutral; behaviour classes as in Section~\ref{sec:brittle:numbers}; a refusal's MAE is a ceiling artifact and must not be read as severity. Every row is $n = 570$. Generated by \texttt{analysis/computer\_vision\_make\_paper\_tables.py}.}
+\label{tab:brittle}
+\small
+\begin{tabular}{llllrrrl}
+\toprule
+Run & Model & Family & Params & Neutral & \textbf{Strict} & Ratio & Behaviour \\
+\midrule
+\multicolumn{8}{l}{\emph{Open weights --- ordered by total parameters}} \\
+L-M05 & Qwen2.5-Coder-7B & Qwen & 7B & 5.68 & \textbf{7.92} & $\times 1.39$ & graded \\
+L-U02 & Llama-3.1-8B & Llama & 8B & 7.31 & \textbf{26.04} & $\times 3.56$ & \textbf{refusal} \\
+L-W02 & GLM-4-9B & GLM & 9B & 4.31 & \textbf{25.48} & $\times 5.91$ & near-refusal \\
+L-F02 & Gemma-3-12B & Gemma & 12B & 5.20 & \textbf{8.77} & $\times 1.69$ & collapse \\
+L-M07 & Qwen2.5-Coder-14B & Qwen & 14B & 3.51 & \textbf{24.52} & $\times 6.99$ & collapse \\
+L-S02 & DeepSeek-Coder-V2-Lite & DeepSeek & 16B & 5.98 & \textbf{12.09} & $\times 2.02$ & collapse \\
+L-Z02 & Mistral-Small-24B & Mistral & 24B & 3.66 & \textbf{26.03} & $\times 7.11$ & \textbf{refusal} \\
+L-Y02 & Gemma-3-27B & Gemma & 27B & 4.32 & \textbf{11.55} & $\times 2.67$ & collapse \\
+L-M01 & Qwen3-Coder-30B-A3B & Qwen & 30B & 4.50 & \textbf{14.91} & $\times 3.31$ & collapse \\
+L-X02 & GLM-4-32B & GLM & 32B & 2.85 & \textbf{9.66} & $\times 3.39$ & collapse \\
+L-C01 & Qwen2.5-Coder-32B & Qwen & 32B & 7.49 & \textbf{20.29} & $\times 2.71$ & collapse \\
+L-V02 & Llama-3.3-70B & Llama & 70B & 4.52 & \textbf{13.52} & $\times 2.99$ & collapse \\
+L-N02 & Qwen2.5-72B & Qwen & 72B & 3.14 & \textbf{9.82} & $\times 3.13$ & collapse \\
+L-M03 & Qwen3-Coder-Next 80B & Qwen & 80B & 5.17 & \textbf{11.70} & $\times 2.26$ & collapse \\
+L-J02 & GLM-4.5-Air & GLM & 106B & 5.66 & \textbf{21.02} & $\times 3.71$ & collapse \\
+L-Q02 & Qwen3-235B-A22B & Qwen & 235B & 4.09 & \textbf{7.32} & $\times 1.79$ & graded \\
+L-R02 & Qwen3-Coder-480B & Qwen & 480B & 3.14 & \textbf{3.78} & $\times 1.20$ & graded \\
+\midrule
+\multicolumn{8}{l}{\emph{Closed --- reference}} \\
+C01 & Flash-Lite & Gemini & --- & 3.34 & 5.75 & $\times 1.72$ & graded \\
+F03 & 3.1 Pro Preview & Gemini & --- & 1.86 & 2.75 & $\times 1.48$ & graded \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{brittleness_bars.pdf}
+\caption{Every strict-flavoured persona run on the full cohort ($51$ runs; $50$ at the default prompt configuration, plus F$01$, which additionally enables thinking), coloured by family and by wording (\emph{strict} darker; \emph{rigorous}/\emph{exacting} lighter). The dashed line is the human inter-grader floor ($\text{MAE} = 2.61$). Runs classified as refusals are marked: their bar height is the distance to the grader mean and is not a severity measurement (Section~\ref{sec:brittle:numbers}). The two default-configuration strict runs not shown are M$01$ ($n = 99$, below the full-cohort cutoff) and F$03$ (\texttt{gemini-3.1-pro-preview}, $2.75$; Table~\ref{tab:brittle}).}
+\label{fig:brittle}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{The three strict-flavoured presets on the models that received all of them. Bold marks a run outside the graded band. These presets are \textbf{not} minimal pairs: only \emph{strict} carries the two policy sentences (Section~\ref{sec:brittle:attrib}); \emph{rigorous} and \emph{exacting} ask for rubric precision with neither. Qwen2.5-Coder-$7$B, Qwen3-Coder-$30$B-A$3$B and Qwen3-Coder-Next received only \emph{strict} in the full-cohort grid; Section~\ref{sec:finetune:personas} covers the first two.}
+\label{tab:wording}
+\small
+\begin{tabular}{lllrrrr}
+\toprule
+Model & Family & Params & Neutral & \emph{strict} & \emph{rigorous} & \emph{exacting} \\
+\midrule
+Flash-Lite & Gemini & --- & 3.34 & 5.75 & 3.92 & 4.58 \\
+\midrule
+Llama-3.1-8B & Llama & 8B & 7.31 & \textbf{26.04} & \textbf{10.31} & 6.89 \\
+GLM-4-9B & GLM & 9B & 4.31 & \textbf{25.48} & 4.53 & 5.18 \\
+Gemma-3-12B & Gemma & 12B & 5.20 & \textbf{8.77} & 5.45 & 5.10 \\
+DeepSeek-Coder-V2-Lite & DeepSeek & 16B & 5.98 & \textbf{12.09} & 7.01 & 6.69 \\
+Mistral-Small-24B & Mistral & 24B & 3.66 & \textbf{26.03} & 6.15 & 7.04 \\
+Gemma-3-27B & Gemma & 27B & 4.32 & \textbf{11.55} & 4.88 & 5.47 \\
+GLM-4-32B & GLM & 32B & 2.85 & \textbf{9.66} & 2.74 & 3.72 \\
+Qwen2.5-Coder-32B & Qwen & 32B & 7.49 & \textbf{20.29} & \textbf{8.70} & \textbf{10.23} \\
+Llama-3.3-70B & Llama & 70B & 4.52 & \textbf{13.52} & 4.69 & 6.74 \\
+Qwen2.5-72B & Qwen & 72B & 3.14 & \textbf{9.82} & 3.09 & 3.43 \\
+GLM-4.5-Air & GLM & 106B & 5.66 & \textbf{21.02} & 7.29 & \textbf{11.29} \\
+Qwen3-235B-A22B & Qwen & 235B & 4.09 & 7.32 & 5.18 & 6.85 \\
+Qwen3-Coder-480B & Qwen & 480B & 3.14 & 3.78 & 3.06 & 3.33 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+M$01$ ($n = 99$, the only strict run on \texttt{gemini-3-flash-preview}) has a CI of $[3.60, 4.88]$ spanning most of the Gemini cluster of Section~\ref{sec:brittle:numbers}, so we do not rank it within that cluster.
+
+\begin{table}[h]
+\centering
+\caption{Attribution of the collapse to the policy sentences rather than the headword. \emph{Left:} S1 and S2 held verbatim, only the adjective varies; the \emph{nharsh} control is the neutral frame with its one adjective swapped to ``harsh''. \emph{Right:} the HARSH frame held fixed, crossing S1 with S2 (both quoted in Section~\ref{sec:brittle:attrib}). All rows $n \ge 569$, default prompt configuration, $t = 0$. Spreads are max $-$ min of the unrounded MAEs, so they can differ from the difference of the printed cells by $0.01$. Bold marks cells whose damage matches the full preset's.}
+\label{tab:attrib}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrrr@{\hskip 2em}rrrr}
+\toprule
+& \multicolumn{5}{c}{headword varied, policy fixed} & \multicolumn{4}{c}{policy varied, frame fixed} \\
+\cmidrule(r){2-6}\cmidrule(l){7-10}
+Model & STRICT & RIGOROUS & FAIR & spread & \emph{nharsh} & frame & $+$S1 & $+$S2 & both \\
+\midrule
+Qwen2.5-Coder-32B  & 16.41 & 17.74 & 18.55 & 2.15 & 8.25 & 9.37 & 15.55 & 12.92 & \textbf{20.26} \\
+Llama-3.3-70B      & 12.67 & 11.37 & 11.41 & 1.30 & 4.60 & ---  & ---   & ---   & --- \\
+Gemma-3-27B        & 10.49 &  9.23 &  8.60 & 1.89 & 4.56 & ---  & ---   & ---   & --- \\
+GLM-4-32B          &  7.02 &  7.43 &  6.41 & 1.02 & 2.88 & ---  & ---   & ---   & --- \\
+Mistral-Small-24B  & 25.99 & 25.87 & 25.05 & 0.94 & 4.23 & 5.62 & 10.33 & \textbf{26.04} & \textbf{26.03} \\
+Llama-3.1-8B       & ---   & ---   & ---   & ---  & ---  & 8.46 & 23.45 & \textbf{26.04} & \textbf{26.04} \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{How each matched \emph{strict} run fails. Q$1 = 0$ is the count of students awarded zero on Q$1$; the next column is how many of \emph{those} still received a non-zero Q$2$. Generated by \texttt{analysis/computer\_vision\_make\_paper\_tables.py}.}
+\label{tab:mechanism}
+\small
+\begin{tabular}{lllrrr}
+\toprule
+Run & Model & Family & MAE & Q$1 = 0$ & \ldots of which Q$2 > 0$ \\
+\midrule
+\multicolumn{6}{l}{\emph{blanket zeroing --- consistent with refusal}} \\
+L-U02 & Llama-3.1-8B & Llama & 26.04 & 570 / 570 (100\%) & 0 (0\%) \\
+L-Z02 & Mistral-Small-24B & Mistral & 26.03 & 570 / 570 (100\%) & 0 (0\%) \\
+L-W02 & GLM-4-9B & GLM & 25.48 & 570 / 570 (100\%) & 29 (5\%) \\
+L-M07 & Qwen2.5-Coder-14B & Qwen & 24.52 & 533 / 570 (94\%) & 31 (6\%) \\
+L-J02 & GLM-4.5-Air & GLM & 21.02 & 361 / 570 (63\%) & 55 (15\%) \\
+\midrule
+\multicolumn{6}{l}{\emph{selective field collapse --- consistent with conflicting instructions (a hypothesis; Section~\ref{sec:brittle:mech})}} \\
+L-C01 & Qwen2.5-Coder-32B & Qwen & 20.29 & 437 / 570 (77\%) & 284 (65\%) \\
+L-M01 & Qwen3-Coder-30B-A3B & Qwen & 14.91 & 357 / 570 (63\%) & 274 (77\%) \\
+L-V02 & Llama-3.3-70B & Llama & 13.52 & 291 / 570 (51\%) & 183 (63\%) \\
+L-N02 & Qwen2.5-72B & Qwen & 9.82 & 136 / 570 (24\%) & 97 (71\%) \\
+L-X02 & GLM-4-32B & GLM & 9.66 & 273 / 570 (48\%) & 139 (51\%) \\
+\midrule
+\multicolumn{6}{l}{\emph{uniform severity --- consistent with calibration drift}} \\
+L-S02 & DeepSeek-Coder-V2-Lite & DeepSeek & 12.09 & 1 / 570 (0\%) & 1 (100\%) \\
+L-M03 & Qwen3-Coder-Next 80B & Qwen & 11.70 & 19 / 570 (3\%) & 8 (42\%) \\
+L-Y02 & Gemma-3-27B & Gemma & 11.55 & 0 / 570 (0\%) & n/a \\
+L-F02 & Gemma-3-12B & Gemma & 8.77 & 1 / 570 (0\%) & 0 (0\%) \\
+L-M05 & Qwen2.5-Coder-7B & Qwen & 7.92 & 8 / 570 (1\%) & 6 (75\%) \\
+L-Q02 & Qwen3-235B-A22B & Qwen & 7.32 & 5 / 570 (1\%) & 1 (20\%) \\
+C01 & Flash-Lite & Gemini & 5.75 & 31 / 570 (5\%) & 21 (68\%) \\
+L-R02 & Qwen3-Coder-480B & Qwen & 3.78 & 1 / 570 (0\%) & 1 (100\%) \\
+F03 & 3.1 Pro Preview & Gemini & 2.75 & 8 / 570 (1\%) & 5 (62\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The three near-total zeroers have awarded-total standard deviations of $0.00$, $0.09$ and $2.42$ and AI--grader correlations undefined, $-0.01$ and $0.19$. GLM-4.5-Air blanket-zeroes $63\%$ of students and still grades the rest ($r = 0.53$), which is why Table~\ref{tab:brittle} classes it a collapse rather than a refusal. Qwen2.5-Coder-$14$B (L-M$07$) is the second intermediate case: it zeroes $88\%$ of whole submissions (mean awarded total $1.52$, $r = 0.25$), just under the $90\%$ refusal cut. Q$1$-zero rates fall at $0$--$5\%$ or $24$--$100\%$ with nothing between, and among the latter the selective fraction is $0$--$15\%$ or $51$--$77\%$.
+
+\begin{table}[h]
+\centering
+\caption{Self-contradiction between the structured Q$1$ score and the prose breakdown, on the two strict-persona runs whose rationales we annotated by hand. A row is self-contradicting when the structured score is $0$ but the rationale itemises positive partial credit. Both runs sit in the selective-field-collapse group of Table~\ref{tab:mechanism} and match its Q$1 = 0$ counts; the second column differs because this one requires reading the prose, which we did not do at scale.}
+\label{tab:contradict}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrr}
+\toprule
+Run & Q$1$ score = 0 & ...with prose $> 0$ & mean contradicted prose-credit \\
+\midrule
+L-C01 (Qwen2.5-Coder-32B + strict) & 437 / 570 (77\%) & 86 (20\%) & 2.60 pts (max 10.0) \\
+L-M01 (Qwen3-Coder-30B-A3B + strict) & 357 / 570 (63\%) & 152 (43\%) & 2.75 pts (max 8.5) \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\paragraph{Representative example.}
+The clearest case in our sample is L-C$01$ student~$\#2$, where both graders gave Q$1 = 12.0 / 12$ and the model emitted Q$1 = 0$. The reasoning blob begins:
+\begin{quote}\itshape
+The student completed most tasks correctly, including defining the transforms, creating DataLoaders, \ldots\ However, the backbone was not properly frozen, and the bonus task for Test Time Augmentation was not implemented.
+\end{quote}
+The same blob then itemises a breakdown (``Complete transforms: 1.5'', ``Create DataLoaders: 0.5'', \ldots) summing to $10.0$ points awarded in prose --- the largest contradicted total in Table~\ref{tab:contradict}.
+
+\paragraph{A prediction of the conflict account that fails.}
+If the collapse is driven by a conflict between S2 and the rubric breakdown, withdrawing the breakdown should remove one side of the conflict and \emph{relieve} the collapse. Removing the breakdown under \emph{strict} worsens MAE by $+6.42$ on Llama-3.3-70B ($13.52 \to 19.94$), $+5.92$ on GLM-4-32B ($9.66 \to 15.58$), $+3.93$ on DeepSeek-Coder-V2-Lite ($12.09 \to 16.02$), $+1.40$ on Qwen2.5-Coder-32B ($20.29 \to 21.69$) and $+0.15$ on Gemma-3-27B ($11.55 \to 11.69$) --- five of five in the wrong direction. The same manipulation under \emph{neutral} is a clean control, with a largest shift of $+0.85$ and four of five models within $\pm 0.25$, so this is specific to the persona rather than an artifact of a shorter prompt.
+
+The fairest reading is that this weakens the causal story without settling on an alternative; the structural-scaffolding reading of Section~\ref{sec:brittle:mech} fits the L-BD result but is itself untested. Withdrawing the breakdown leaves the rubric table in the prompt, so the conflict is attenuated rather than eliminated; a fully clean test would strip the rubric too, which we have not run. We flag this as open rather than resolved (Section~\ref{sec:limitations}).
+
+\clearpage
+\paragraph{Prompt-only baselines.}
+\label{app:promptbaselines}
+Before fine-tuning, we asked whether the \emph{strict}-persona collapse can be undone by prompting alone. We tried the two repairs the literature suggests on the four CV-exam models whose \emph{strict} runs collapse or refuse (Qwen2.5-Coder-$32$B, GLM-4-$32$B, Mistral-Small-$24$B, Llama-3.1-$8$B), over the first $100$ students (the G-series subset), Q$1$--Q$3$, with the paper's vLLM stack, and compared each repair against the same model's own \emph{strict} and neutral runs restricted to the same students (Table~\ref{tab:promptbaselines}).
+
+The first repair is \emph{decomposition}~\citep{pathak2025rubricneedenhancingllmbased}: instead of grading a whole question in one call, the grader makes one call per rubric task row ($16$/$13$/$11$ rows for Q$1$/Q$2$/Q$3$; penalty and bonus rows handled) and awards only that row's marks; the row awards are summed and clamped to the question maxima. The persona, guidelines, reference solution and submission are exactly those of the paper's prompt. The hope is that a small, concrete criterion leaves the model less room to zero a whole question. It does not. Qwen2.5-Coder-$32$B moves from $21.24$ to $20.00$ MAE, Mistral-Small-$24$B from $27.25$ to $26.27$, and Llama-3.1-$8$B refuses on every row exactly as it refused on every question ($27.26$). Only GLM-4-$32$B re-enters the graded band ($8.90 \to 5.01$), and even then it sits at $2.2\times$ its neutral error. The credit-withholding sentences bind on each criterion just as they bind on the question as a whole.
+
+The second repair is \emph{grade-then-arbitrate}~\citep{chan2023chatevalbetterllmbasedevaluators}: the paper's \emph{strict} prompt and the paper's neutral prompt each grade the question, and a third call under the neutral persona receives both JSON grades together with the rubric and must resolve every disagreement on the rubric's partial-credit scale. The arbiter's grade is the run's grade, at three calls per question instead of one. This does bring every model back into the graded band, but only to where its own neutral prompt already was: GLM-4-$32$B $2.64$ against $2.24$ neutral, Mistral $3.13$ against $3.59$, Llama $7.46$ against $7.73$ (on $99$ students: one arbiter reply, student $87$, Q$2$, was truncated at $4{,}096$ tokens), Qwen $9.29$ against $8.02$. The arbiter defers to the neutral grade, so arbitration repairs the persona by removing it, at three times the cost, and gains nothing beyond the neutral prompt.
+
+Neither repair therefore reaches what fine-tuning reaches. The neutral level the repairs recover is $2.2$--$8.0$ MAE on these four models; the pooled adapters of Section~\ref{sec:finetune} start from that level and end at $1.75$--$2.01$ on the held-out CV students, below the human floor. Scripts: \texttt{prompt\_baselines\_grade.py}, \texttt{analysis/checks/prompt\_baselines\_vs\_paper.py}.
+
+
+\begin{table}[h]
+\centering
+\caption{Prompt-only repairs under the \emph{strict} persona, CV exam, first $100$ students, $35$-point base scale; the paper's strict and neutral runs are restricted to the same students. MAE with $95\%$ bootstrap CI ($2000$ resamples); zero = share of students awarded a total of $0$; behaviour classes as in Section~\ref{sec:brittle:numbers}. Human floor on these students: $3.43$.}
+\label{tab:promptbaselines}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llrrrl}
+\toprule
+Model & Run & MAE [CI] & Bias & Zero & Behaviour \\
+\midrule
+Qwen2.5-Coder-32B & paper neutral (L-A$32$) & 8.02 [7.38, 8.68] & $-7.96$ & 0\% & collapse \\
+ & paper strict (L-C$01$) & 21.24 [20.31, 22.14] & $-21.24$ & 18\% & collapse \\
+ & decomposed, strict & 20.00 [19.10, 20.93] & $-20.00$ & 3\% & collapse \\
+ & arbitrated, strict & 9.29 [8.58, 9.98] & $-9.27$ & 0\% & collapse \\
+\midrule
+GLM-4-32B & paper neutral (L-X$01$) & 2.24 [1.91, 2.59] & $-0.17$ & 0\% & graded \\
+ & paper strict (L-X$02$) & 8.90 [7.81, 10.03] & $-8.81$ & 5\% & collapse \\
+ & decomposed, strict & 5.01 [4.50, 5.51] & $-4.95$ & 0\% & graded \\
+ & arbitrated, strict & 2.64 [2.23, 3.10] & $-1.53$ & 0\% & graded \\
+\midrule
+Mistral-Small-24B & paper neutral (L-Z$01$) & 3.59 [3.13, 4.08] & $-2.81$ & 0\% & graded \\
+ & paper strict (L-Z$02$) & 27.25 [25.88, 28.64] & $-27.25$ & 99\% & \textbf{refusal} \\
+ & decomposed, strict & 26.27 [24.98, 27.55] & $-26.27$ & 56\% & collapse \\
+ & arbitrated, strict & 3.13 [2.74, 3.53] & $-2.31$ & 0\% & graded \\
+\midrule
+Llama-3.1-8B & paper neutral (L-U$01$) & 7.77 [6.88, 8.61] & $-6.24$ & 0\% & graded \\
+ & paper strict (L-U$02$) & 27.26 [25.89, 28.65] & $-27.26$ & 100\% & \textbf{refusal} \\
+ & decomposed, strict & 27.26 [25.89, 28.65] & $-27.26$ & 100\% & \textbf{refusal} \\
+ & arbitrated, strict ($n = 99$) & 7.46 [6.60, 8.28] & $-5.77$ & 0\% & graded \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\clearpage
+\section{Closed-Model Details}
+\label{app:closed}
+
+\begin{table}[t]
+\centering
+\caption{Closed models from three vendors under \emph{neutral}, \emph{strict} and \emph{lenient} on both exams (Section~\ref{sec:closed:vendors}): MAE against the grader average with $95\%$ bootstrap CI, and bias. Gemini rows are grid runs (D$02$/F$03$/F$02$ and A$01$/C$01$/C$02$ on the CV exam; IG$08$/IG$23$/IG$14$ and IG$01$/IG$05$/IG$06$ on the ML exam, with their $n$ as in Tables~\ref{tab:allruns} and~\ref{tab:iaruns}). OpenAI and Anthropic rows were graded on the full cohorts through the vendors' batch APIs with the identical prompt, reasoning off and temperature $0$ (OpenAI) or thinking disabled (Anthropic, whose API exposes no temperature); every reply parsed. Bold marks a run outside the graded band; no zero-total rate exceeds $1.1\%$. Generated by \texttt{analysis/closed\_vendor\_table.py}.}
+\label{tab:closedvendors}
+\small
+\resizebox{\linewidth}{!}{\input{sections/closed_vendors_table}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{The six full-cohort configurations, and five first-$100$ runs, whose point-estimate MAE meets or undercuts the human inter-grader floor, with $95\%$ bootstrap CIs ($2000$ resamples), plus reference rows. The G-series and M02 rows cover only the first $\sim 100$ students, an easier subset (the unmodified D01 recipe scores $1.23$ there vs.\ $1.64$ on the full cohort; Appendix~\ref{sec:closed:gseries}); they are not comparable to the full-cohort rows, and M02's CI upper bound crosses the floor.}
+\label{tab:headline}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llrrrr}
+\toprule
+Run & Model & $n$ & MAE & $95\%$ CI & Bias \\
+\midrule
+\multicolumn{6}{l}{\emph{Human inter-grader floor (Section~\ref{sec:floor})}} \\
+--- & G${}_1$ vs.\ G${}_2$ & 570 & 2.61 & $[2.37,\ 2.85]$ & --- \\
+\midrule
+\multicolumn{6}{l}{\emph{Full-cohort configurations}} \\
+D01 & gemini-3-flash-preview, neutral & 570 & \textbf{1.64} & $[1.51,\ 1.79]$ & $+0.01$ \\
+F02 & gemini-3.1-pro-preview + lenient & 570 & 1.79 & $[1.62,\ 1.95]$ & $+0.82$ \\
+D02 & gemini-3.1-pro-preview, neutral & 570 & 1.86 & $[1.70,\ 2.02]$ & $-0.82$ \\
+B03 & gemini-flash-lite + thinking & 570 & 2.05 & $[1.89,\ 2.21]$ & $-0.15$ \\
+O03 & gpt-5.5 + lenient (batch API) & 570 & 2.25 & $[2.08,\ 2.44]$ & $+1.13$ \\
+O01 & gpt-5.5, neutral (batch API) & 570 & 2.43 & $[2.28,\ 2.59]$ & $-1.65$ \\
+\midrule
+\multicolumn{6}{l}{\emph{First-$100$-students subset (easier subset; see caption)}} \\
+D01 (restricted) & gemini-3-flash-preview, baseline recipe on the same $100$ students & 100 & 1.23 & $[1.02,\ 1.49]$ & $-0.18$ \\
+G04 & 3-flash-preview, no rubric breakdown & 100 & 1.25 & $[1.01,\ 1.51]$ & $-0.07$ \\
+G03 & 3-flash-preview + thinking & 100 & 1.39 & $[1.18,\ 1.61]$ & $-0.12$ \\
+G02 & 3-flash-preview, no guidelines & 99 & 1.60 & $[1.30,\ 1.93]$ & $+0.79$ \\
+G01 & 3-flash-preview, no reference solution & 98 & 1.63 & $[1.32,\ 2.02]$ & $+0.71$ \\
+M02 & 3-flash-preview + lenient & 100 & 2.18 & $[1.75,\ 2.65]$ & $+1.90$ \\
+\midrule
+\multicolumn{6}{l}{\emph{Reference rows}} \\
+A01 & gemini-flash-lite (baseline recipe) & 570 & 3.34 & $[3.15,\ 3.53]$ & $-1.78$ \\
+L-R04 & Qwen3-Coder-480B + rigorous (best robust open) & 570 & 3.06 & $[2.88,\ 3.26]$ & $-0.23$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{The paired third-grader test (Eq.~\eqref{eq:paired}) applied to the zero-shot configurations, on the full $570$-student CV cohort: the same statistic and decision rule as Table~\ref{tab:ftpaired}, the standard the fine-tuned models face. \emph{better} means the whole $95\%$ CI of $\overline{d}$ sits below zero, ``$=$ grader'' that it contains zero, \emph{worse} that it lies above. CIs are the normal approximation used in Table~\ref{tab:ftpaired}; a $2000$-resample percentile bootstrap gives the same verdict in every row. With the floor at $2.61$, $\overline{d} = \tfrac{1}{2}(|\mathrm{AI}-\mathrm{G}_1| + |\mathrm{AI}-\mathrm{G}_2|) - 2.61$ exactly. The two single-grader distances differ by up to $0.63$ here, so both are shown. Generated by \texttt{analysis/checks/paired\_test\_zero\_shot\_cv.py}.}
+\label{tab:zeroshotpaired}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{llrrrrl}
+\toprule
+Run & Configuration & $|\mathrm{AI}{-}\mathrm{G}_{\mathrm{avg}}|$ & $|\mathrm{AI}{-}\mathrm{G}_1|$ & $|\mathrm{AI}{-}\mathrm{G}_2|$ & $\overline{d}$ [$95\%$ CI] & Verdict \\
+\midrule
+D01 & 3-flash-preview, neutral        & 1.64 & 2.23 & 1.92 & $-0.54$ $[-0.71, -0.36]$ & \textbf{better} \\
+F02 & 3.1-pro-preview $+$ lenient     & 1.79 & 2.32 & 2.15 & $-0.37$ $[-0.56, -0.18]$ & \textbf{better} \\
+D02 & 3.1-pro-preview, neutral        & 1.86 & 2.53 & 1.96 & $-0.37$ $[-0.55, -0.18]$ & \textbf{better} \\
+B03 & flash-lite $+$ thinking         & 2.05 & 2.55 & 2.29 & $-0.19$ $[-0.39, +0.01]$ & $=$ grader \\
+O03 & \texttt{gpt-5.5} $+$ lenient (Section~\ref{sec:closed:vendors}) & 2.25 & 2.59 & 2.62 & $-0.01$ $[-0.22, +0.21]$ & $=$ grader \\
+O01 & \texttt{gpt-5.5}, neutral (Section~\ref{sec:closed:vendors}) & 2.43 & 3.10 & 2.51 & $+0.19$ $[-0.02, +0.41]$ & $=$ grader \\
+\midrule
+\multicolumn{7}{l}{\emph{Reference rows (do not clear the floor)}} \\
+A01 & flash-lite, baseline recipe     & 3.34 & 3.83 & 3.46 & $+1.03$ $[+0.77, +1.29]$ & worse \\
+N01 & \texttt{claude-opus-5}, neutral (Section~\ref{sec:closed:vendors}) & 3.54 & 4.05 & 3.42 & $+1.13$ $[+0.88, +1.37]$ & worse \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.66\linewidth]{d01_scatter.pdf}
+\caption{D01 (\texttt{gemini-3-flash-preview}, neutral, $t=0$): AI total vs.\ grader-average total over the full $n = 570$ submissions, with $y = x$ as the perfect-agreement reference. Bias is $+0.01$, and residual error concentrates in the under-$15$ band, where graders also disagree more.}
+\label{fig:d01scatter}
+\end{figure}
+
+\begin{table}[h]
+\centering
+\caption{Prompt-component ablations on \texttt{gemini-flash-lite}. B03 vs.\ A01 measures dynamic-budget thinking against the baseline's disabled thinking (\texttt{thinking\_budget} $= 0$; Appendix~\ref{app:details}). $n = 570$ except B01 ($567$) and B02/B04 ($569$ each), which exclude students with a permanently failed grading call.}
+\label{tab:bseries}
+\small
+\begin{tabular}{llrr}
+\toprule
+Run & Change vs.\ A01 & MAE & Bias \\
+\midrule
+A01 & --- (baseline) & 3.34 & $-1.78$ \\
+B01 & drop reference solution & 4.13 & $+3.30$ \\
+B02 & drop guidelines & 3.34 & $-1.42$ \\
+B03 & thinking on (dynamic) & \textbf{2.05} & $-0.15$ \\
+B04 & drop rubric breakdown & 3.22 & $-1.45$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{G-series on \texttt{gemini-3-flash-preview}, all on the first-$100$ subset ($n = 100$, except G01/G02 at $98$/$99$ after excluding permanently failed grading calls). D01-restricted is the baseline recipe on the same students. Bootstrap CI on $2000$ resamples.}
+\label{tab:gseries}
+\small
+\begin{tabular}{llrr}
+\toprule
+Run & Change vs.\ baseline & MAE & $95\%$ CI \\
+\midrule
+\textbf{D01 (restricted)} & --- (baseline) & \textbf{1.23} & $[1.02,\ 1.49]$ \\
+G04 & drop rubric breakdown & 1.25 & $[1.01,\ 1.51]$ \\
+G03 & thinking on (dynamic) & 1.39 & $[1.18,\ 1.61]$ \\
+G02 & drop guidelines & 1.60 & $[1.30,\ 1.93]$ \\
+G01 & drop reference solution & 1.63 & $[1.32,\ 2.02]$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The apparent G-series wins are a sample-size artifact ($n = 100$).}
+\label{sec:closed:gseries}
+
+The G-series replays the ablations on \texttt{gemini-3-flash-preview}, whose throughput limited these runs to the first $100$ students. Against D01's full-cohort $1.64$, G04 (no rubric breakdown, $1.25$) appears to win; restricting D01 to the same students gives $1.23$, so the baseline ties G04 within noise and leads the other three (Table~\ref{tab:gseries}). Dropping the reference solution or the guidelines costs about $0.4$ MAE, with CIs still grazing the baseline's.
+
+\paragraph{Flash-Lite at $t = 0$ is deterministic here; sampling adds variance without gain.}
+\label{sec:closed:variance}
+
+We measured sampling variance on \texttt{gemini-flash-lite} (E01/E02/E03 at $t = 0.0/0.5/0.7$, five reruns per cell). As everywhere in this paper the statistics cover the three graded questions only (Q$4$ is bonus-only), leaving \num{1687}/\num{1701}/\num{1701} (student, question) cells per configuration. At $t = 0$ the model is fully deterministic: $100\%$ of cells have zero standard deviation across reruns. At $t = 0.5$ the median per-cell standard deviation is $0.65$ points and $22.3\%$ of cells have a standard deviation above one point; at $t = 0.7$ those figures rise to $0.76$ and $31.8\%$. Qwen2.5-Coder-$32$B and Qwen3-Coder-Next at $t = 0.5$ ($\sim 50$-student subset) show $0.76$ and $0.82$, comparable to Gemini at $t = 0.7$. Averaging the reruns does not beat a single $t = 0$ call: mean-of-reruns MAE is $3.38$ at $t = 0$, $3.51$ at $t = 0.5$, and $3.60$ at $t = 0.7$, versus $3.34$ for the single-call A01 baseline (the $0.04$ gap at $t = 0$ comes from E01's smaller cohort, not from nondeterminism). We therefore recommend a single call at $t = 0$ as the production default.
+
+\clearpage
+\section{Open-Weights Details}
+\label{app:open}
+
+This appendix carries the exhibits behind Section~\ref{sec:open}: neutral-prompt baselines for all $17$ variants and the few-shot comparison. L-A$32$ rationales often penalise valid stylistic divergence from the reference solution --- different variable names or layer orderings --- supporting the over-anchoring account of the $32$B regression informally.
+
+\paragraph{Few-shot prompting moves the open model substantially.}
+\label{sec:open:fewshot}
+Two worked examples per question (Table~\ref{tab:fewshot}) improve Flash-Lite by $0.31$ MAE and Qwen3-Coder-$30$B-A$3$B by $\approx 1.16$; on the ML exam it nearly halves the same model's error ($11.12 \to 5.84$; Appendix~\ref{app:replication}). Excluding the five demonstration students changes nothing measurable: on the $562$ (Flash-Lite) and $565$ (Qwen3-Coder-$30$B-A$3$B) students left, the uplift is $+0.30$ $[0.05, 0.54]$ and $+1.16$ $[1.04, 1.30]$ against $+0.31$ and $+1.16$ on the full cohort, and the ML exam's arms match ($+5.28$ against $+5.28$ for the $30$B, $+3.56$ against $+3.55$ for Flash-Lite, less its three demonstration students).
+
+\begin{table}[h]
+\centering
+\caption{Open-weights baselines on the default prompt (neutral persona, $t = 0$), ordered by family then total parameters. MAE in points out of $35$ with $95\%$ bootstrap CI; bias is mean signed error (AI $-$ grader-avg). Six vendors and both dense and mixture-of-experts architectures. All rows $n = 570$.}
+\label{tab:openbaselines}
+\small
+\begin{tabular}{lllrrr}
+\toprule
+Run & Model & Params & MAE & $95\%$ CI & Bias \\
+\midrule
+L-S01 & DeepSeek-Coder-V2-Lite (MoE) & 16B & 5.98 & $[5.69,\ 6.29]$ & $-3.44$ \\
+\midrule
+L-W01 & GLM-4-9B                     & 9B   & 4.31 & $[4.02,\ 4.63]$ & $+1.68$ \\
+L-X01 & GLM-4-32B                    & 32B  & \textbf{2.85} & $[2.66,\ 3.05]$ & $+0.50$ \\
+L-J01 & GLM-4.5-Air (MoE)            & 106B & 5.66 & $[5.38,\ 5.95]$ & $-5.37$ \\
+\midrule
+L-F01 & Gemma-3-12B                  & 12B  & 5.20 & $[4.94,\ 5.48]$ & $-2.75$ \\
+L-Y01 & Gemma-3-27B                  & 27B  & 4.32 & $[4.12,\ 4.55]$ & $-1.52$ \\
+\midrule
+L-U01 & Llama-3.1-8B                 & 8B   & 7.31 & $[6.97,\ 7.68]$ & $-5.15$ \\
+L-V01 & Llama-3.3-70B                & 70B  & 4.52 & $[4.31,\ 4.73]$ & $-3.60$ \\
+\midrule
+L-Z01 & Mistral-Small-24B            & 24B  & 3.66 & $[3.46,\ 3.87]$ & $-2.41$ \\
+\midrule
+L-A07 & Qwen2.5-Coder-7B             & 7B   & 5.68 & $[5.39,\ 5.98]$ & $-4.84$ \\
+L-A14 & Qwen2.5-Coder-14B            & 14B  & 3.51 & $[3.30,\ 3.74]$ & $-1.16$ \\
+L-A30M & Qwen3-Coder-30B-A3B (MoE)   & 30B  & 4.50 & $[4.29,\ 4.72]$ & $-2.70$ \\
+L-A32 & Qwen2.5-Coder-32B            & 32B  & 7.49 & $[7.19,\ 7.78]$ & $-7.35$ \\
+L-N01 & Qwen2.5-72B (dense)          & 72B  & 3.14 & $[2.95,\ 3.35]$ & $+0.19$ \\
+L-ANxt & Qwen3-Coder-Next 80B (MoE)  & 80B  & 5.17 & $[4.92,\ 5.42]$ & $-4.74$ \\
+L-Q01 & Qwen3-235B-A22B (MoE)        & 235B & 4.09 & $[3.87,\ 4.32]$ & $-3.56$ \\
+L-R01 & Qwen3-Coder-480B FP8 (MoE)   & 480B & 3.14 & $[2.95,\ 3.35]$ & $+0.51$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Two worked examples per question, drawn from the highest-agreement grader pair and labelled with D$01$'s scores and rationales (in-context distillation, not human exemplars); the five demonstration students remain in the evaluated cohort (Appendix~\ref{app:limitations}), though excluding them moves the uplift by at most $0.01$ (\texttt{analysis/checks/fewshot\_demo\_leakage.py}). Few-shot moves Gemini Flash-Lite by $\approx 0.3$ MAE and Qwen3-Coder-$30$B-A$3$B by $\approx 1.2$ MAE points.}
+\label{tab:fewshot}
+\small
+\begin{tabular}{llrr}
+\toprule
+Run & Model & MAE & Bias \\
+\midrule
+A01 & gemini-flash-lite (no few-shot) & 3.34 & $-1.78$ \\
+K01 & gemini-flash-lite + few-shot & 3.03 & $+1.09$ \\
+L-A30M & Qwen3-Coder-30B-A3B (no few-shot) & 4.50 & $-2.70$ \\
+L-K01 & Qwen3-Coder-30B-A3B + few-shot & 3.34 & $-1.77$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\clearpage
+\section{Fine-Tuning Details}
+\label{app:ft}
+
+All cells use the pinned held-out students ($114$ CV / $208$ ML exam). Evaluation follows each exam's ground truth: the CV exam records score and bonus separately, so agreement is score-only on both sides; the ML exam folds bonus into the grade, so agreement compares AI score $+$ bonus to the grader total.
+
+\begin{table}[t]
+\centering
+\caption{Worst MAE drift over the three harsh personas (\emph{strict}, \emph{rigorous}, \emph{exacting}): the largest signed difference persona $-$ neutral; when all three are negative it is the least negative, which is why Qwen3-Coder-$30$B-A$3$B's ML entry of $-1.26$ is its \emph{rigorous} drift while \emph{strict} sits at $-2.26$ (marks recipe; full grid in Table~\ref{tab:ftpersonafull}). $\dagger$: negative drift: the persona accidentally \emph{improved} the over-grading base (Section~\ref{sec:finetune:personas}). \emph{lenient}, swept after tuning, is in Table~\ref{tab:ftpersonafull}: the pooled marks adapters drift $+0.05$ to $+0.39$ except Qwen3-Coder-$30$B-A$3$B ($+1.02$ CV, $+1.81$ ML); bd $+0.20$ to $+1.64$.}
+\label{tab:ftpersona}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+& \multicolumn{2}{c}{CV exam} & \multicolumn{2}{c}{ML exam} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}
+Model & base & pooled & base & pooled \\
+\midrule
+Qwen2.5-Coder-7B    & $+5.40$  & $+0.02$ & $+0.22$  & $-0.04$ \\
+Qwen2.5-Coder-14B   & $+19.75$ & $-0.02$ & $+1.13$  & $+0.32$ \\
+Qwen3-Coder-30B-A3B & $+12.51$ & $+0.07$ & $-1.26^\dagger$ & $+0.29$ \\
+Gemma-4-E4B         & $+5.81$  & $+0.05$ & $+6.53$  & $+0.30$ \\
+Llama-3.1-8B        & $+17.28$ & $-0.05$ & $+18.62$ & $+0.03$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Hyperparameters and evaluation.}
+We use LoRA with rank $16$, $\alpha = 32$, dropout $0.05$, and all-linear targets (attention-only for the $30$B MoE), in bf16 for two epochs at learning rate $2\times10^{-4}$ with cosine decay and effective batch size $16$, held fixed across four data-parallel A100s; Gemma-4 trains on a single A100, as its unused parameters per step trip DDP's reduction check. All evaluation is served by vLLM, including Gemma-4's adapter, which reproduces the HuggingFace-generation numbers to within $0.1$ MAE across its four re-run cells.
+
+\begin{table}[t]
+\centering
+\caption{Held-out MAE vs.\ the grader average, mean over the five models, both recipes (the per-model marks grid is Table~\ref{tab:ftmain}). The pooled adapter is best or tied in all eight columns.}
+\label{tab:ftmeans}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Graded on & base & CV-trained & ML-trained & pooled \\
+\midrule
+CV exam, marks   & 5.54 & 1.90 & 3.57 & \textbf{1.87} \\
+CV exam, bd      & 4.73 & 2.13 & 3.52 & \textbf{2.01} \\
+ML exam, marks & 7.95 & 5.36 & 3.54 & \textbf{3.41} \\
+ML exam, bd    & 8.76 & 6.16 & 4.24 & \textbf{4.15} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{The full persona grid (MAE, marks recipe; per-persona bias and the bd grid are in the released workbooks). $\dagger$: the sign-inconsistency cell of Section~\ref{sec:finetune:personas} --- \emph{strict} improves the over-grading base. \emph{len.} is the inflating direction, swept after tuning: the pooled marks adapters drift $+0.05$ to $+0.39$ except Qwen3-$30$B ($+1.02$ CV, $+1.81$ ML, the latter above the $5.19$ floor); every pooled lenient drift is positive (bias $+1.0$ to $+4.4$). bd worst drifts: base up to $+18.5$ on either exam; pooled $\le +0.62$ under the three harsh wordings, with Llama-bd-\emph{strict} at $2.67$ (down from $4.08$ under the CV-exam-only adapter); under \emph{lenient} the bd adapters drift $+0.20$ to $+1.64$ (Qwen3-$30$B ML $4.07 \to 5.71$, Gemma-$4$ ML $4.22 \to 5.51$).}
+\label{tab:ftpersonafull}
+\small
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{llrrrrrrrrrr}
+\toprule
+& & \multicolumn{5}{c}{CV exam} & \multicolumn{5}{c}{ML exam} \\
+\cmidrule(lr){3-7}\cmidrule(lr){8-12}
+Model & Arm & neut. & strict & rigor. & exact. & len. & neut. & strict & rigor. & exact. & len. \\
+\midrule
+Qwen2.5-7B  & base   & 6.60 & 12.00 & 9.07 & 6.07 & 4.81 & 6.48 & 6.70 & 6.04 & 6.15 & 7.50 \\
+            & pooled & 1.84 & 1.84 & 1.85 & 1.81 & 2.00 & 3.40 & 3.36 & 3.30 & 3.31 & 3.52 \\
+Qwen2.5-14B & base   & 4.06 & \textbf{23.81} & 3.65 & 7.31 & 3.79 & 7.70 & 8.83 & 7.71 & 6.33 & 11.18 \\
+            & pooled & 1.89 & 1.85 & 1.87 & 1.81 & 2.00 & 3.29 & 3.61 & 3.23 & 3.28 & 3.50 \\
+Qwen3-30B   & base   & 4.76 & 17.28 & 4.96 & 5.76 & 4.49 & 8.60 & 6.34$^\dagger$ & 7.34 & 6.30 & 13.00 \\
+            & pooled & 1.75 & 1.80 & 1.79 & 1.82 & 2.78 & 3.45 & 3.73 & 3.58 & 3.72 & 5.26 \\
+Gemma-4     & base   & 4.29 & 10.10 & 4.69 & 6.03 & 3.89 & 4.66 & 11.19 & 5.11 & 6.22 & 7.39 \\
+            & pooled & 1.88 & 1.93 & 1.89 & 1.82 & 2.26 & 3.53 & 3.83 & 3.54 & 3.57 & 3.87 \\
+Llama-8B    & base   & 7.99 & \textbf{25.28} & 12.35 & 11.95 & 6.86 & 12.30 & \textbf{30.92} & 7.16 & 7.97 & 29.23 \\
+            & pooled & 2.01 & 1.96 & 1.93 & 1.91 & 2.05 & 3.37 & 3.39 & 3.26 & 3.26 & 3.46 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering
+\caption{Paired third-grader test (Eq.~\eqref{eq:paired}) for the pooled adapters. Floors: $2.83$ (CV), $5.19$ (ML). \emph{better}: the whole $95\%$ CI of $\overline{d}$ below zero; ``$=$ grader'': it contains zero. Both single-grader distances are shown: $|\mathrm{AI}-\mathrm{G}_1|$ is the larger in all ten ML rows and nine of ten CV rows, by up to $0.22$ (CV) and $0.57$ (ML). No paired-bootstrap difference excludes zero, and one ML student whose G$_1$ slot reads $0.0$ against a real G$_2$ mark (Appendix~\ref{app:replication}) alone accounts for $0.21$--$0.25$ of that gap, so we read the asymmetry as the grader-slot artifact, not a systematic preference. Three CV upper bounds fall inside $\pm 0.05$ and are printed to three decimals; all stay below zero under both the normal CI used here and a $2000$-resample percentile bootstrap, though 7B bd, CV is marginal (Section~\ref{sec:limitations}). Recomputed by \texttt{analysis/checks/ftpaired\_marginal\_verdicts.py} and \texttt{ftpaired\_symmetry\_guard.py}.}
+\label{tab:ftpaired}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{llrrrrl}
+\toprule
+Cell & $n$ & $|\mathrm{AI}{-}\mathrm{G}_{\mathrm{avg}}|$ & $|\mathrm{AI}{-}\mathrm{G}_1|$ & $|\mathrm{AI}{-}\mathrm{G}_2|$ & $\overline{d}$ [$95\%$ CI] & Verdict \\
+\midrule
+7B marks, CV     & 114 & 1.84 & 2.35 & 2.35 & $-0.48$ $[-0.90, -0.05]$ & \textbf{better} \\
+14B marks, CV    & 114 & 1.89 & 2.38 & 2.35 & $-0.46$ $[-0.89, -0.044]$ & \textbf{better} \\
+30B marks, CV    & 114 & 1.75 & 2.38 & 2.17 & $-0.56$ $[-0.98, -0.13]$ & \textbf{better} \\
+Gemma marks, CV  & 114 & 1.88 & 2.41 & 2.34 & $-0.45$ $[-0.89, -0.020]$ & \textbf{better} \\
+Llama marks, CV  & 114 & 2.01 & 2.54 & 2.34 & $-0.39$ $[-0.85, +0.07]$ & $=$ grader \\
+7B marks, ML     & 208 & 3.40 & 4.19 & 3.96 & $-1.11$ $[-1.73, -0.49]$ & \textbf{better} \\
+14B marks, ML    & 208 & 3.29 & 4.11 & 4.02 & $-1.13$ $[-1.75, -0.50]$ & \textbf{better} \\
+30B marks, ML    & 208 & 3.45 & 4.34 & 3.95 & $-1.04$ $[-1.65, -0.43]$ & \textbf{better} \\
+Gemma marks, ML  & 208 & 3.53 & 4.45 & 4.05 & $-0.94$ $[-1.57, -0.30]$ & \textbf{better} \\
+Llama marks, ML  & 208 & 3.37 & 4.33 & 4.03 & $-1.01$ $[-1.65, -0.36]$ & \textbf{better} \\
+\midrule
+7B bd, CV        & 114 & 1.94 & 2.41 & 2.35 & $-0.45$ $[-0.90, -0.001]$ & \textbf{better} \\
+14B bd, CV       & 114 & 1.84 & 2.34 & 2.29 & $-0.51$ $[-0.93, -0.10]$ & \textbf{better} \\
+30B bd, CV       & 114 & 1.99 & 2.57 & 2.35 & $-0.37$ $[-0.81, +0.08]$ & $=$ grader \\
+Gemma bd, CV     & 114 & 2.22 & 2.53 & 2.58 & $-0.27$ $[-0.71, +0.17]$ & $=$ grader \\
+Llama bd, CV     & 114 & 2.04 & 2.54 & 2.38 & $-0.37$ $[-0.80, +0.06]$ & $=$ grader \\
+7B bd, ML        & 208 & 4.19 & 5.09 & 4.54 & $-0.37$ $[-1.06, +0.31]$ & $=$ grader \\
+14B bd, ML       & 208 & 4.02 & 4.87 & 4.49 & $-0.51$ $[-1.16, +0.14]$ & $=$ grader \\
+30B bd, ML       & 208 & 4.07 & 5.07 & 4.50 & $-0.40$ $[-1.08, +0.28]$ & $=$ grader \\
+Gemma bd, ML     & 208 & 4.22 & 5.09 & 4.54 & $-0.37$ $[-1.05, +0.31]$ & $=$ grader \\
+Llama bd, ML     & 208 & 4.25 & 5.05 & 4.71 & $-0.31$ $[-0.98, +0.37]$ & $=$ grader \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Q$3$ of the CV exam retains a residual ceiling.}
+Fine-tuning lowers MAE on every graded CV-exam question, but a residual ceiling remains on Q$3$, semantic segmentation, the most open-ended: post-tuning MAE $1.1$--$1.3$ across models under the marks recipe, against $0.6$--$1.0$ on Q$1$/Q$2$.
+
+\paragraph{The catastrophic tail disappears, on both exams.}
+Under a neutral prompt the base models mis-grade up to $43$ of $114$ CV-exam students (Llama) and $66$ of $208$ ML-exam students by more than $10$ marks (${>}16$ on the ML exam's larger scale); pooled, every model is at $0$--$1$ (CV) and $2$--$4$ (ML) under marks ($0$--$1$ and $4$--$6$ under bd).
+
+\paragraph{Errors become human-like, on both exams.}
+We correlate each grader's per-student absolute error with the exam's intrinsic ambiguity, $|\mathrm{G}_1 - \mathrm{G}_2|$. On the CV exam the bases show no consistent relationship ($-0.31$ to $+0.37$) and four of five blunder on submissions the two graders \emph{agreed} on; after pooled fine-tuning the correlation is positive for every model on both exams ($+0.35$ to $+0.48$), the residual errors concentrating on the genuinely ambiguous submissions. Part of that correlation is arithmetic: the grader-average target carries the graders' own noise, so any low-bias grader's residual co-varies with $|\mathrm{G}_1 - \mathrm{G}_2|$ (the coupling Appendix~\ref{app:gt} notes for pairs) and we do not subtract it; the base-to-tuned change establishes the loss of blunders on submissions the graders agreed on, not human-like judgement.
+
+
+\clearpage
+\section{Per-Question Error Decomposition}
+\label{app:perq}
+
+Table~\ref{tab:perqbias} decomposes the mean signed error per question for the headline runs of both exams; both sides are sums of per-question marks, so the decomposition is exact, reproducing each run's published bias (Tables~\ref{tab:headline},~\ref{tab:allruns} and~\ref{tab:iaruns}) to within $4 \times 10^{-15}$.
+
+Across the $44$ runs decomposed --- the ten in the table plus the $17$ matched neutral/strict open-weights pairs of Table~\ref{tab:brittle} --- the largest cancellation is L-A$14$ (Qwen2.5-Coder-$14$B, neutral): per-question biases of $+0.89$, $-1.30$ and $-0.75$ sum to $-1.16$, hiding $1.78$ of $2.94$ points of directional error ($61\%$); the largest in the table is A$01$, at $1.25$ of $3.03$. Cancellation is confined to the near-unbiased runs: all $17$ matched \emph{strict} runs and all four ML-exam Gemini runs have $C = 0$, so no persona-collapse claim rests on a cancelled total.
+
+\begin{table}[t]
+\centering
+\caption{Per-question mean signed error for the headline runs of both exams, over exactly the students each run's published metric uses. $b_q$ is the mean of $\mathrm{AI}_q - \bar{\mathrm{G}}_q$ on question $q$ (CV exam: $35$-point base scale, Q$4$ bonus excluded; ML exam: score plus bonus, $\approx 65$-point scale). \emph{Total} is the run's published bias. $C = \sum_q |b_q| - |\sum_q b_q|$ is the cancellation the total hides, zero exactly when every question is pushed the same way. At two decimals a row can miss $\sum_q b_q = {}$\emph{Total} by $0.01$ through rounding. Generated by \texttt{analysis/checks/per\_question\_signed\_error.py}.}
+\label{tab:perqbias}
+\small
+\setlength{\tabcolsep}{4.5pt}
+\begin{tabular}{llrrrrrrr}
+\toprule
+Run & Configuration & $n$ & $b_1$ & $b_2$ & $b_3$ & Total & $\sum_q |b_q|$ & $C$ \\
+\midrule
+\multicolumn{9}{l}{\emph{CV exam --- $35$-point base scale (Q$1$ $12$, Q$2$ $11$, Q$3$ $12$)}} \\
+D01 & 3-flash-preview, neutral        & 570 & $-0.15$ & $+0.08$ & $+0.08$ & $+0.01$ & 0.30 & 0.29 \\
+D02 & 3.1-pro-preview, neutral        & 570 & $-0.44$ & $-0.07$ & $-0.31$ & $-0.82$ & 0.82 & 0.00 \\
+F02 & 3.1-pro-preview $+$ lenient     & 570 & $-0.01$ & $+0.28$ & $+0.55$ & $+0.82$ & 0.84 & 0.02 \\
+B03 & flash-lite $+$ thinking         & 570 & $-0.50$ & $+0.04$ & $+0.30$ & $-0.15$ & 0.85 & 0.69 \\
+A01 & flash-lite, neutral (baseline)  & 570 & $-0.28$ & $-2.12$ & $+0.63$ & $-1.78$ & 3.03 & 1.25 \\
+C01 & flash-lite $+$ strict           & 570 & $-1.80$ & $-3.08$ & $-0.55$ & $-5.44$ & 5.44 & 0.00 \\
+\midrule
+\multicolumn{9}{l}{\emph{ML exam --- $\approx 65$-point scale (Q$1$ $26$, Q$2$ $17$, Q$3$ $22$)}} \\
+IG08 & 3.1-pro-preview, neutral       & 1038 & $+0.43$ & $+0.20$ & $+0.55$ & $+1.18$ & 1.18 & 0.00 \\
+IG07 & 3-flash-preview, neutral       & 1038 & $+1.55$ & $+0.10$ & $+0.59$ & $+2.24$ & 2.24 & 0.00 \\
+IG01 & flash-lite, neutral            & 1013 & $+4.00$ & $+0.79$ & $+1.19$ & $+5.98$ & 5.98 & 0.00 \\
+IG05 & flash-lite $+$ strict          & 1008 & $-1.97$ & $-2.82$ & $-3.04$ & $-7.83$ & 7.83 & 0.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\clearpage
+\section{Ground-Truth Structure}
+\label{sec:groundtruth}
+\label{app:gt}
+
+Two checks probe the grader-average target, with D$01$ as the AI side and, on the ML exam, its best full-cohort run (IG$08$, \texttt{gemini-3.1-pro-preview}).
+
+\paragraph{Whether the AI inherits per-pair human noise is exam-specific.}
+\label{sec:groundtruth:perpair}
+If the AI inherited its target's noise structure, its per-pair error should track the human MAE, which spans $0.85$ to $3.55$. It does not ($r = -0.301$, $p = 0.40$; Table~\ref{tab:perpair}, Figure~\ref{fig:pairscatter}). Agreement with any one grader's judgements is a different metric, not measurable here.
+
+\emph{And it does not generalise.} On the ML exam's $18$ stable pairs the test inverts --- $r = +0.571$ (permutation $p = 0.014$), a difference itself significant (Fisher $z = 2.10$, $p = 0.036$), and the sign holds for every AI side we tried ($+0.57$ to $+0.72$). Some coupling must be arithmetic, since a noisier pair injects its variance into the target, but the correction is not clean enough to rest on; we report the divergence, not a mechanism; the ML exam's contiguous-block grading assignment is one candidate (Appendix~\ref{app:replication}).
+
+\paragraph{Per-grader harshness is real, modest, and best measured within pairs.}
+\label{sec:groundtruth:perta}
+The $20$ graders span a $6.55$-point range in mean awarded total. A one-way ANOVA over the $1{,}140$ grades puts that at $\eta^2 = 0.051$ ($p = 5\times10^{-6}$), but those grades are not independent: each submission is marked by both members of one fixed pair, and each pair marks its own batch of $55$--$60$ students, confounding between-pair harshness with batch ability (Appendix~\ref{app:replication}). The $\eta^2$ splits orthogonally into $0.034$ between pairs and $0.017$ within pairs, the only part identified from the \emph{same} papers. A linear mixed model $\text{total} \sim \text{grader}$ with a random intercept per student (student variance $48.69$, residual $5.73$, $\mathrm{ICC} = 0.89$) gives the ten within-pair contrasts standard errors of $0.44$--$0.46$ against $1.36$--$1.40$ for the between-pair ones, and the likelihood-ratio tests separate them: collapsing graders to pair means costs little ($\chi^2(9) = 21.1$, $p = 0.012$), dropping the within-pair contrasts costs a great deal ($\chi^2(10) = 168.9$, $p = 5\times10^{-31}$; blocked-ANOVA partial $\eta^2 = 0.26$ of the paired-difference variance). Within pairs the mean signed difference runs $-2.75$ to $+3.11$ points, six of ten pairs are non-zero after Holm correction, and a sign-flip omnibus over the $570$ paired differences gives $p < 10^{-4}$. A student's expected score does depend on which pair graded them, and the AI's MAE incorporates that noise in its target; but only the within-pair third of the $5\%$ is measurable as harshness rather than as batch ability. That $\eta^2$ is design-dependent and does not transfer; the quantity that does --- signed bias between two graders on the \emph{same} papers --- agrees across exams at $0.61\times$ the floor (Appendix~\ref{app:replication}).
+
+Together the two results say the best closed-model grader acts as a $\text{MAE} \approx 1.6$ stabiliser around a noisy human consensus on the CV exam, sitting below all but the tightest pair's disagreement bar.
+
+The largest single-paper disagreement is $24.1$ points. The one-way tests use all $1{,}140$ grades ($570$ students $\times$ two graders), and the non-parametric Kruskal--Wallis test agrees with the ANOVA ($H = 53.80$, $p = 3.5\times10^{-5}$); both share the independence assumption that the paired analysis above replaces. Neither that analysis nor the one-way tests turn on the one negative total (a $\mathrm{TA}_1$ total of $-1.8$): removing it gives $H = 54.34$, a within-pair $\eta^2$ share of $0.017$, and $\chi^2(10) = 171.6$.
+
+\begin{table}[h]
+\centering
+\caption{Per-pair human disagreement vs.\ D$01$'s per-pair AI MAE, sorted by human MAE.}
+\label{tab:perpair}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Pair & $n$ & Human MAE & D$01$ AI MAE & D$01$ AI bias \\
+\midrule
+G${}_{6}$ / G${}_{16}$  & 56 & 0.85 & 1.86 & $+1.18$ \\
+G${}_{9}$ / G${}_{19}$  & 55 & 1.87 & 1.43 & $-0.46$ \\
+G${}_{5}$ / G${}_{15}$  & 57 & 2.12 & 1.95 & $-0.90$ \\
+G${}_{4}$ / G${}_{14}$  & 56 & 2.25 & 1.40 & $-0.88$ \\
+G${}_{7}$ / G${}_{17}$  & 57 & 2.48 & 1.84 & $+1.11$ \\
+G${}_{8}$ / G${}_{18}$  & 58 & 2.85 & 1.83 & $-0.34$ \\
+G${}_{10}$ / G${}_{20}$ & 60 & 3.05 & 1.85 & $-0.91$ \\
+G${}_{2}$ / G${}_{12}$  & 58 & 3.45 & 1.02 & $+0.12$ \\
+G${}_{3}$ / G${}_{13}$  & 56 & 3.54 & 1.92 & $+1.63$ \\
+G${}_{1}$ / G${}_{11}$  & 57 & 3.55 & 1.32 & $-0.36$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.78\linewidth]{pair_correlation.pdf}
+\caption{Per-pair human disagreement (x-axis) against D$01$'s per-pair MAE (y-axis), one point per grader pair. The two are uncorrelated (Pearson $r = -0.30$, $p = 0.40$): the AI grader sits roughly equidistant from all pairs rather than inheriting pair-level noise.}
+\label{fig:pairscatter}
+\end{figure}
+
+\clearpage
+\section{ML-Exam Replication Details}
+\label{app:replication}
+
+The ML exam of Section~\ref{sec:brittle:replication} is an introductory AI practical from another course at the same institution: $1{,}038$ students after excluding $24$ whose uploads contained no gradable notebook, dual-graded by $49$ graders, three questions (regression, PyTorch, classification) worth $23{+}3$, $14{+}3$ and $19{+}3$ marks including bonuses ($56$ base points plus up to $9$ bonus points, $65$ in all). Question maxima come from the marking scheme's task tables, not its header totals, which contradict them in all three questions; two instructor corrections issued by email mid-grading are folded in, both affecting Q$3$. Per-question grader marks fold bonus into the score, so the comparable AI total is score plus bonus. A student who did not submit a question is scored $0$ by graders and models alike.
+
+The grading instrument is identical to Section~\ref{sec:setup} (same persona strings, JSON schema, output rules and grading scale, reference solution, rubric breakdown, no chain-of-thought, temperature $0$, one sample per question), except that this exam has no student-facing guidelines document, so the \texttt{gd} component is fixed at $0$ throughout.
+
+\paragraph{The grid.}
+The replication comprises $162$ configurations --- $30$ closed-model ($23$ Gemini IG-, $6$ OpenAI IO-, $1$ Anthropic IN-) and $132$ open-weights (IA-) --- replaying the CV exam's programme: neutral and matched \emph{strict} runs for all $17$ open-weights models, five-persona sweeps on $13$, the mechanism probes of Section~\ref{sec:brittle:attrib}, component removals, few-shot demonstrations on one closed and one open model, temperature-variance probes, and a closed arm covering all four Gemini models, \texttt{gpt-5.5}, \texttt{gpt-5.4} and \texttt{claude-opus-5}. Table~\ref{tab:iaruns} (Appendix~\ref{app:iaruns}) lists every run.
+
+\begin{table}[h]
+\centering
+\caption{ML exam, $1{,}038$ dual-graded students: matched neutral/strict pairs for all $17$ open-weights models, sorted by damage ratio. MAE against the grader average on a $\approx 65$-point scale, $95\%$ bootstrap CI on the strict run, strict MAE as a multiple of the ML exam's human floor ($5.13$, defined as in Section~\ref{sec:floor}). Behaviour classes are those of Section~\ref{sec:brittle:numbers} and describe the strict run, at this exam's floor-matched band $\text{MAE} \ge 15.7$ ($3.07\times$ its $5.13$ floor, the multiple the CV exam's $8$ fixes); four strict runs and one neutral baseline cross it. A fixed $\text{MAE} \ge 8$ would be only $1.56\times$ this floor and would label ten strict runs and eleven neutral baselines collapse. A refusal's MAE is a ceiling artifact, not a severity measurement. Ratios below $1$ are real improvements, examined below. Generated by \texttt{analysis/introduction\_to\_ai\_make\_paper\_tables.py}.}
+\label{tab:replication}
+\small
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrlrrrrl}
+\toprule
+model & neutral & strict & strict CI & ratio & $\times$floor & zero-rate & bias & behaviour \\
+\midrule
+GLM-4.5-Air & 5.60 & 18.49 & [17.96, 19.02] & $\times 3.30$ & 3.6 & 37.8\% & $-18.31$ & collapse \\
+Qwen2.5-Coder-32B & 4.57 & 13.24 & [12.79, 13.69] & $\times 2.90$ & 2.6 & 10.5\% & $-13.07$ & graded \\
+Llama-3.1-8B & 13.16 & 29.58 & [28.70, 30.45] & $\times 2.25$ & 5.8 & 100.0\% & $-29.58$ & \textbf{refusal} \\
+Llama-3.3-70B & 4.70 & 10.17 & [9.77, 10.58] & $\times 2.16$ & 2.0 & 9.0\% & $-9.63$ & graded \\
+Mistral-Small-24B & 8.96 & 17.32 & [16.77, 17.87] & $\times 1.93$ & 3.4 & 32.2\% & $-17.20$ & collapse \\
+Qwen3-Coder-Next 80B & 4.47 & 8.63 & [8.26, 9.00] & $\times 1.93$ & 1.7 & 2.3\% & $-8.12$ & graded \\
+GLM-4-32B & 8.03 & 12.18 & [11.68, 12.69] & $\times 1.52$ & 2.4 & 14.1\% & $-10.68$ & graded \\
+Qwen2.5-Coder-14B & 8.61 & 11.06 & [10.61, 11.50] & $\times 1.28$ & 2.2 & 16.6\% & $-10.46$ & graded \\
+GLM-4-9B & 13.15 & 16.68 & [16.15, 17.20] & $\times 1.27$ & 3.2 & 35.7\% & $-16.52$ & collapse \\
+Qwen2.5-Coder-7B & 6.88 & 7.45 & [7.11, 7.80] & $\times 1.08$ & 1.5 & 7.4\% & $-5.67$ & graded \\
+Qwen3-235B-A22B & 5.40 & 5.18 & [4.89, 5.47] & $\times 0.96$ & 1.0 & 1.7\% & $-3.39$ & graded \\
+Gemma-3-27B & 8.33 & 7.61 & [7.23, 7.99] & $\times 0.91$ & 1.5 & 0.6\% & $-6.25$ & graded \\
+Gemma-3-12B & 10.36 & 6.79 & [6.49, 7.10] & $\times 0.66$ & 1.3 & 0.5\% & $+0.09$ & graded \\
+Qwen3-Coder-480B & 10.10 & 6.04 & [5.75, 6.34] & $\times 0.60$ & 1.2 & 1.0\% & $+3.25$ & graded \\
+DeepSeek-Coder-V2-Lite & 16.41 & 9.22 & [8.83, 9.62] & $\times 0.56$ & 1.8 & 0.0\% & $+2.42$ & graded \\
+Qwen2.5-72B & 10.64 & 5.42 & [5.15, 5.70] & $\times 0.51$ & 1.1 & 2.3\% & $-1.67$ & graded \\
+Qwen3-Coder-30B-A3B & 11.12 & 5.58 & [5.31, 5.87] & $\times 0.50$ & 1.1 & 2.2\% & $-1.55$ & graded \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{ia_brittleness_bars.pdf}
+\caption{Every strict-flavoured persona run on the ML exam's full cohort ($50$ runs: \emph{strict}/\emph{rigorous}/\emph{exacting} at the default prompt configuration, including IG$13$, which additionally enables thinking), coloured by family and by wording (\emph{strict} darker; \emph{rigorous}/\emph{exacting} lighter). The dashed line is the ML exam's human inter-grader floor ($\text{MAE} = 5.13$). The refusal (Llama-3.1-8B $+$ \emph{strict}) is hatched: its bar height is the distance to the grader mean, not a severity measurement. The ML exam's counterpart to Figure~\ref{fig:brittle}.}
+\label{fig:iabrittle}
+\end{figure}
+
+\paragraph{When severity helps, it is calibration, not robustness.}
+Fifteen of the $17$ neutral baselines over-mark, with biases from $+1.51$ to $+14.89$ (the exceptions are Qwen2.5-Coder-$32$B at $-0.21$ and GLM-4.5-Air at $-1.34$), and across the $16$ non-refusal pairs a model's neutral bias predicts the strict effect at $r = -0.73$ (Spearman $-0.73$, permutation $p = 0.002$; $r = -0.50$ with the refusal's ceiling-artifact MAE included), whereas the CV exam's neutral biases sit at or below zero for all but two models and zero of $17$ improve. The seven improvements in Table~\ref{tab:replication} are heavy over-markers pushed down --- Qwen3-Coder-$30$B-A$3$B (bias $+10.44$), Qwen2.5-$72$B ($+10.31$), Qwen3-Coder-$480$B ($+9.52$) --- two miscalibrations cancelling: the $480$B is one such case ($\text{MAE} = 10.10$ at neutral, twice its floor), whereas Qwen3-$235$B-A$22$B is genuinely indifferent to the sentence on both exams (here bias $+3.73$, strict effect $-0.22$).
+
+\paragraph{Mechanism.}
+The probe of Section~\ref{sec:brittle:mech} separates the same two shapes on the ML exam (Table~\ref{tab:repmech}). It is read only for runs that left the graded band and zeroed at least $5\%$ of Q$1$, the volume gate the CV exam's classifier applies at $10\%$; two runs fall below it, DeepSeek-Coder-V2-Lite ($6$ of $1038$, $0.6\%$) and Qwen3-Coder-Next $80$B ($39$ of $1001$, $3.9\%$).
+
+\begin{table}[h]
+\centering
+\caption{ML exam, \emph{strict} runs: blanket versus selective zeroing, all $17$ models. Q$1 = 0$ is the count of students awarded zero on Q$1$ out of those the run graded; the next column is how many of \emph{those} still received a non-zero Q$2$. A run is read only if it left the graded band \emph{and} zeroed Q$1$ on at least $5\%$ of the students it graded (the CV exam applies the same volume gate at $10\%$, \texttt{MECH\_ZERO\_RATE}; on these runs any cut between $4.8\%$ and $13.3\%$ gives the same partition): below that, the zeros are ordinary non-attempts and the share is noise on a handful of students. Generated by \texttt{analysis/introduction\_to\_ai\_make\_paper\_tables.py}.}
+\label{tab:repmech}
+\small
+\begin{tabular}{lrrrl}
+\toprule
+model (strict) & Q$1 = 0$ & of those, Q$2 > 0$ & share & reading \\
+\midrule
+Llama-3.1-8B & 1038 / 1038 (100\%) & 0 & 0\% & blanket \\
+GLM-4-9B & 669 / 1038 (64\%) & 255 & 38\% & selective \\
+GLM-4.5-Air & 521 / 1038 (50\%) & 110 & 21\% & blanket \\
+GLM-4-32B & 477 / 1038 (46\%) & 295 & 62\% & n/a (in band) \\
+Mistral-Small-24B & 375 / 1038 (36\%) & 21 & 6\% & blanket \\
+Qwen2.5-Coder-14B & 196 / 1038 (19\%) & 13 & 7\% & n/a (in band) \\
+Llama-3.3-70B & 152 / 1038 (15\%) & 40 & 26\% & n/a (in band) \\
+Qwen2.5-Coder-32B & 144 / 1038 (14\%) & 19 & 13\% & n/a (in band) \\
+Qwen2.5-Coder-7B & 138 / 1038 (13\%) & 59 & 43\% & n/a (in band) \\
+Qwen3-Coder-30B-A3B & 50 / 1038 (5\%) & 24 & 48\% & n/a (in band) \\
+Qwen2.5-72B & 48 / 1038 (5\%) & 21 & 44\% & n/a (in band) \\
+Qwen3-Coder-Next 80B & 39 / 1001 (4\%) & 13 & 33\% & n/a (in band) \\
+Qwen3-235B-A22B & 30 / 1038 (3\%) & 10 & 33\% & n/a (in band) \\
+Gemma-3-12B & 21 / 1038 (2\%) & 14 & 67\% & n/a (in band) \\
+Qwen3-Coder-480B & 19 / 1038 (2\%) & 7 & 37\% & n/a (in band) \\
+Gemma-3-27B & 15 / 1038 (1\%) & 7 & 47\% & n/a (in band) \\
+DeepSeek-Coder-V2-Lite & 6 / 1038 (1\%) & 4 & 67\% & n/a (in band) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The attribution series replicates.}
+The minimal pairs of Section~\ref{sec:brittle:attrib} reproduce both findings. S2 remains the only single component that stops graders grading: alone it takes Llama-3.1-$8$B to $29.39$ ($98\%$ of students zeroed) and Mistral-Small-$24$B to $26.03$ ($76\%$ zeroed), while the HARSH frame alone moves each of the three models probed by at most $2.4$ points from neutral, twice in the \emph{improving} direction. Nor does the adjective carry the damage: with both policy sentences held verbatim, swapping STRICT for RIGOROUS or FAIR moves MAE by $0.55$--$3.86$ across the five models with no consistent direction --- a FAIR teaching assistant carrying the harsh policy still more than doubles Qwen2.5-Coder-$32$B's error ($10.40$ against $4.57$) --- while the \emph{nharsh} control (a harsh adjective with no policy) lands within $1.2$ points of neutral on all five. Absolute damage is exam-dependent --- S2 alone leaves Qwen2.5-Coder-$32$B in the graded band here ($6.68$, against $12.92$ on the CV exam) --- but which sentence dominates a model is not: S1 outweighs S2 for the $32$B and S2 for the other two, on both exams.
+
+\paragraph{The closed-model arm.}
+The ML exam also carries all four Gemini models under the same instrument. The parity result replicates on the closed side --- all three full-cohort neutral configurations sit wholly below the floor's CI: \texttt{gemini-3.1-pro-preview} at $3.40$ $[3.16, 3.65]$ (IG$08$; Figure~\ref{fig:iascatter}), \texttt{gemini-2.5-pro} at $3.47$, and \texttt{gemini-3-flash-preview} at $3.92$, against a floor of $5.13$ $[4.80, 5.48]$; the $3.1$-pro under \emph{lenient} ($4.48$ $[4.22, 4.75]$) and under \emph{strict} ($3.67$ $[3.43, 3.94]$, bias $-1.00$ against $+1.18$ at neutral; IG$23$) join them. The cross-vendor runs of Section~\ref{sec:closed:vendors} agree: no other closed run leaves this exam's band (Table~\ref{tab:closedvendors}). What does \emph{not} replicate is Gemini's persona immunity at the cheaper tier. Flash-Lite, at $7.53$ under neutral (bias $+5.98$), moves in \emph{both} directions: \emph{strict} takes it to $9.02$ (bias $-7.83$) and \emph{lenient} to $17.86$ (bias $+17.80$), the one closed run past this exam's band, which only four open-weights strict runs cross --- while \emph{rigorous} and \emph{exacting} improve it ($5.52$, $5.96$), the same calibration correction the open side shows. The stronger \texttt{gemini-3-flash-preview} follows the same law on its first-$100$ subset: against a matched-subset baseline of $3.87$ (bias $+3.04$), \emph{strict} lands at $2.87$ (bias $+0.09$) and \emph{lenient} at $6.99$ (bias $+6.60$). Component ablations echo the CV exam with larger magnitudes: dropping the reference solution costs Flash-Lite $4.93$ points ($7.53 \to 12.46$) against $0.79$ there, and thinking helps by $2.16$ ($7.53 \to 5.37$) against $1.29$.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.66\linewidth]{ia_scatter.pdf}
+\caption{IG$08$ (\texttt{gemini-3.1-pro-preview}, neutral, $t=0$): AI total vs.\ grader-average total over the ML exam's full $n = 1{,}038$ cohort, with $y = x$ as the perfect-agreement reference. The best full-cohort configuration on the ML exam ($0.66\times$ its human floor), the counterpart to Figure~\ref{fig:d01scatter}.}
+\label{fig:iascatter}
+\end{figure}
+
+\paragraph{Few-shot demonstrations transfer, with one measurement caveat.}
+Two worked examples per question (from the two highest-agreement grader pairs, labelled by IG$08$; the three students remain in the evaluated cohort, $3/1{,}038$) nearly halve the open model's error: Qwen3-Coder-$30$B-A$3$B goes from $11.12$ to $5.84$, bias $+10.44$ to $+4.56$, on the full cohort (IA$201$). On Flash-Lite (IG$18$) they lengthen the prompt enough that $334$ students' calls fail permanently, with biased dropout: the dropped students average $32.78$ points against the survivors' $28.02$ (Welch $p = 3\times10^{-7}$). On the matched $679$-student subsample the effect holds ($7.87 \to 4.32$ MAE, bias $+6.52 \to +0.37$), but its headline numbers are not comparable to full-cohort rows and Table~\ref{tab:iaruns} flags its $n$.
+
+\paragraph{Determinism at $t = 0$ does not transfer.}
+On the CV exam Flash-Lite reproduced $100\%$ of (student, question) cells exactly across five $t = 0$ reruns (Appendix~\ref{sec:closed:variance}). Here the same probe (IG$10$) reproduces only $59.3\%$; the median per-cell standard deviation is still $0.00$ but a $40.7\%$ tail varies, and at $t = 0.5$/$0.7$ the medians rise to $0.98$/$1.14$ (IG$11$/IG$12$) against $0.65$/$0.76$ there. Two open-weights probes on $41$ students at $t = 0.5$ (IA$92$, Qwen2.5-Coder-$32$B; IA$136$, Qwen3-Coder-Next) show medians of $0.65$ and $0.84$.
+
+\paragraph{Component removals do not transfer either.}
+The CV exam's over-anchoring result ($7.49 \to 3.12$ on Qwen2.5-Coder-$32$B with the reference solution removed) does not reproduce: the same removal moves it $4.57 \to 4.73$ here. The rubric-breakdown test of Appendix~\ref{app:brittle} softens: under \emph{strict}, removing the breakdown worsens the collapse on GLM-4-$32$B ($+6.26$) and Llama-3.3-$70$B ($+3.96$) but is flat on Qwen2.5-Coder-$32$B ($+0.19$), Gemma-3-$27$B ($-0.26$) and DeepSeek-Coder-V2-Lite ($-0.10$), neutral controls within $\pm 0.52$ --- against five-of-five worsening there.
+
+\paragraph{Ground-truth structure of the ML exam.}
+Its floor is $5.13 / 65$ ($95\%$ bootstrap CI $[4.80, 5.48]$ at \num{50000} resamples --- the lower bound is not stable to two decimals at \num{2000}; Pearson $r = 0.871$). Nine of the $1{,}038$ rows record $0.0$ for exactly one grader while the partner awarded real marks: ungraded slots stored as zeros. They move the floor by $0.05$ (inside the CI, so the headline retains them) but dominate the extremes, the maximum single-paper disagreement being $41.0$ without them and $51.0$ with. Excluding them everywhere changes no conclusion: the floor falls to $5.09$ $[4.76, 5.42]$, the best full-cohort configurations move by at most $0.06$ MAE (IG$08$ $3.40 \to 3.35$, IG$09$ $3.47 \to 3.42$, IG$07$ $3.92 \to 3.86$, Qwen3-Coder-Next neutral $4.47 \to 4.44$), no run of Table~\ref{tab:replication} or Table~\ref{tab:iaruns} changes behaviour class or damage-ratio order (largest move $0.21$ MAE, the Llama-3.1-$8$B refusal), and on the $208$ held-out students (three of the nine; the other six sit in the $830$-student fine-tuning split) the pooled adapters grade $0.08$--$0.11$ MAE better, every Table~\ref{tab:ftpaired} verdict intact (\texttt{analysis/checks/ml\_unrecorded\_grader\_rows.py}). A further nine rows carry $0.0$ from both graders and are genuine non-submissions, retained.
+
+The pairing is hybrid, unlike the CV exam's $10$ fixed pairs: $49$ assistants work in $48$ grading slots (one slot is a pair who marked jointly) forming $51$ pairings, of which $18$ are stable pairs of $38$--$51$ students covering $816$ of $1{,}038$ ($79\%$); the rest are ad hoc combinations around floating graders, and two of the $51$ on the roster returned no marks. Every per-pair figure is scoped to that backbone, across which human MAE runs $1.90$ to $10.36$ --- a $5.4\times$ spread, against $4.2\times$ on the CV exam --- with eight of $18$ pairs above the pooled floor, against five of ten. Mean within-pair bias magnitude is $3.14$ ($0.61\times$ floor) against $1.58$ ($0.61\times$ floor): systematic harshness is the same fraction of the noise floor on both exams, whereas a one-way $\eta^2$ over grader identity is not comparable here, because each pair marks a contiguous block of students of widely varying ability.
+
+The per-pair test of Appendix~\ref{sec:groundtruth:perpair} inverts here: per-pair human MAE against IG$08$'s per-pair MAE gives Pearson $r = +0.571$ (permutation $p = 0.014$, \num{20000} shuffles; Spearman $+0.447$; Figure~\ref{fig:iapairscatter}) against $-0.301$ on the CV exam, a difference significant at Fisher $z = 2.10$, $p = 0.036$, and the sign survives changing the AI side (Qwen3-Coder-Next neutral $+0.565$, Qwen2.5-Coder-$32$B $+0.723$). Some of the coupling is arithmetic, a noisier pair injecting its variance into the target. One candidate for the rest is the assignment itself: ML pairs mark contiguous blocks of students whose ability varies widely, so block difficulty raises both human disagreement and model error within a pair, whereas the CV exam's fixed pairs each drew a comparable slice. The AI is still the more uniform grader, its per-pair MAE spanning $3.6\times$.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.78\linewidth]{ia_pair_correlation.pdf}
+\caption{ML exam: per-pair human disagreement (x-axis) against IG$08$'s per-pair MAE (y-axis) over the $18$-pair stable backbone. Unlike the CV exam (Figure~\ref{fig:pairscatter}), the two correlate ($r = +0.571$): here the AI's error is largest exactly where the humans disagree most.}
+\label{fig:iapairscatter}
+\end{figure}
+
+\paragraph{What the replication does and does not establish.}
+\emph{Strict} worsens ten of $17$ models and takes four above this exam's floor-matched band ($\text{MAE} \ge 15.7$), none of them there at neutral. What transfers is the floor-relative attainability of parity (IG$08$ at $0.66\times$ this exam's floor; the best open-weights baseline, Qwen3-Coder-Next, $4.47$ $[4.24, 4.72]$, also wholly below its CI), the S2 mechanism, the blanket/selective split and the danger of an untested persona sentence; model choice, persona direction, component effects, failure shape (Qwen2.5-Coder-$32$B inverts from selective field collapse to blanket zeroing) and $t = 0$ determinism are exam-level properties.
+
+\section{All Grader Configurations}
+\label{app:runs}
+
+Table~\ref{tab:allruns} lists every one of the $171$ grader configurations with its headline metrics, one row per run. The machine-readable version, with per-question breakdowns and the full column set, ships as \texttt{analysis/computer\_vision\_master\_comparison.csv} \artifactsin.
+
+\input{sections/appendix_runs_table}
+
+\section{Full Limitations Inventory}
+\label{app:limitations}
+
+\paragraph{Persona coverage.}
+Qwen2.5-Coder-$14$B received no persona in the full-cohort grid and Qwen3-Coder-Next only \emph{strict}; the held-out sweep adds all three harsh wordings and \emph{lenient} on the $7$B, $14$B and $30$B (base and pooled), leaving the $80$B evaluated on only one wording. On the ML exam the $14$B received \emph{neutral} and \emph{strict} only, and Qwen3-Coder-Next no \emph{rigorous} or \emph{exacting}. The headword series covers five models and the policy $2\times2$ three, with only Qwen2.5-Coder-$32$B and Mistral-Small-$24$B in both, and we did not cross them, so an adjective-only interaction is untested. On the closed side only Gemini received all five wordings; Section~\ref{sec:limitations} itemises the cross-vendor coverage, whose decoding differs where the APIs force it (Anthropic's current models expose no temperature; \texttt{gpt-5.5} is not bit-reproducible at temperature $0$).
+
+\paragraph{Model and serving confounds.}
+\texttt{gemini-2.5-pro} rejects a zero thinking budget, so D$03$ against D$01$/D$02$ compares an older thinking-on model with newer thinking-off ones, if anything understating the newer models' advantage. The Qwen3-Coder \emph{Instruct} variants implement no thinking mode, so their thinking-on configurations are inert replicates.
+
+
+\paragraph{Fine-tuning.}
+Held-out MAE CIs are roughly $\pm 0.45$, so the paired test carries the verdicts. The bd arm trains on targets produced by D$01$ (CV exam) and IG$07$ (ML exam), so it measures closed-model distillation; only the marks recipe trains on human labels alone. The $30$B is not a clean size point (MoE, attention-only LoRA); base rows use the fine-tuning harness, not identical reruns of Section~\ref{sec:brittle}. vLLM batching reorders reductions ($\sim 0.01$ MAE); all evaluation, Gemma-4's adapter included, is vLLM-served, with Gemma-4's path cross-validated against HuggingFace generation to within $\sim 0.1$ MAE (Appendix~\ref{app:ft}).
+
+
+\section{ML-Exam Run Table}
+\label{app:iaruns}
+
+Table~\ref{tab:iaruns} lists every one of the $162$ ML-exam configurations individually --- $30$ closed-model and $132$ open-weights runs --- with each run's own confidence interval, bias, and behaviour class. Table~\ref{tab:replication} pairs the matched neutral/strict runs for the headline comparison; this one is the flat record, and is the ML exam's counterpart to Table~\ref{tab:allruns}. The machine-readable version, with per-question breakdowns and the full column set, ships as \texttt{analysis/introduction\_to\_ai\_master\_comparison.csv} \artifactsin.
+
+\input{sections/introduction_to_ai_appendix_runs_table}

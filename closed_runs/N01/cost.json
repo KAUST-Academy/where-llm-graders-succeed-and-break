@@ -1,0 +1,19 @@
+{
+  "tokens": {
+    "input": 6987384,
+    "cached": 5009784,
+    "cache_write_5m": 0,
+    "cache_write_1h": 5460903,
+    "output": 1823372,
+    "reasoning": 0
+  },
+  "usd_batch": 68.82,
+  "usd_standard_equiv": 137.64,
+  "cache_net_usd_batch": 2.38,
+  "n_results": 1881,
+  "n_usable": 1881,
+  "per_call_usd_batch": 0.0366,
+  "models_served": [
+    "claude-opus-5"
+  ]
+}

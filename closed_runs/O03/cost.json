@@ -1,0 +1,19 @@
+{
+  "tokens": {
+    "input": 5962101,
+    "cached": 4771584,
+    "cache_write_5m": 0,
+    "cache_write_1h": 0,
+    "output": 1371198,
+    "reasoning": 0
+  },
+  "usd_batch": 36.67,
+  "usd_standard_equiv": 73.33,
+  "cache_net_usd_batch": -10.74,
+  "n_results": 1881,
+  "n_usable": 1881,
+  "per_call_usd_batch": 0.0195,
+  "models_served": [
+    "gpt-5.5-2026-04-23"
+  ]
+}

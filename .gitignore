@@ -1,0 +1,49 @@
+# reports and extra figures the analysis scripts write beside the paper's own
+analysis/*.md
+!analysis/closed_vendor_table.md
+analysis/*.tex
+media/pareto_cost_vs_quality.pdf
+media/per_question_mae.pdf
+media/scatter_ai_vs_ta.pdf
+media/variance_histogram.pdf
+# LaTeX build output (main.bbl is kept: arXiv does not run BibTeX)
+*.aux
+*.log
+*.out
+*.blg
+*.fls
+*.fdb_latexmk
+main.pdf
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+# credentials the graders read from the repository root -- never commit these
+.env
+.env.*
+vertex_key.json
+client_secret.json
+*.pem
+*.key
+# written by the grading and fine-tuning pipelines (some files exceed GitHub's 100 MB limit)
+finetune/adapters/
+finetune/adapters_textonly/
+finetune/data*/*.jsonl
+finetune/logs/
+closed_runs/*/requests*.jsonl
+closed_runs/*/results.jsonl
+closed_runs/*_shards/
+prompt_baselines/calls/
+prompt_baselines/*.log
+*.lock
+local_logs/
+local_variance/
+local_prompts/
+local_responses/
+gemini_prompts/
+gemini_responses/
+slurm_logs/
+logs/
+*_results/smoke/
+/local_variance.csv
+/gemini_variance.csv

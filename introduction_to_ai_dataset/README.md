@@ -190,3 +190,17 @@ International](https://creativecommons.org/licenses/by-nc/4.0/)): use, share and
 non-commercial purposes with credit to the source. The student work was contributed with the
 course instructors' permission and is released for research on automated grading. Do not
 attempt to re-identify students or TAs.
+
+## Citation
+
+```bibtex
+@misc{habibullah2026llmgraderssucceedbreak,
+      title={Where LLM Graders Succeed and Break: Evidence from Two Computer-Science Exams},
+      author={Ali Habibullah and Yazan Alshoibi and Mohammad Alshiekh and Salman Khan and Naeemullah Khan},
+      year={2026},
+      eprint={2609.29333},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2609.29333},
+}
+```

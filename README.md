@@ -80,9 +80,13 @@ The grading and fine-tuning runs need GPUs or API access.
 ## Citation
 
 ```bibtex
-@misc{habibullah2026graders,
-  title  = {Where LLM Graders Succeed and Break: Evidence from Two Computer-Science Exams},
-  author = {Habibullah, Ali and Alshoibi, Yazan and Alshiekh, Mohammad and Khan, Salman and Khan, Naeemullah},
-  year   = {2026}
+@misc{habibullah2026llmgraderssucceedbreak,
+      title={Where LLM Graders Succeed and Break: Evidence from Two Computer-Science Exams}, 
+      author={Ali Habibullah and Yazan Alshoibi and Mohammad Alshiekh and Salman Khan and Naeemullah Khan},
+      year={2026},
+      eprint={2609.29333},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2609.29333}, 
 }
 ```
